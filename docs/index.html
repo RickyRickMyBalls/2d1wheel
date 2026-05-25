@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>2D OneWheel Simulator</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="sim-stage" aria-label="2D OneWheel simulator">
+        <canvas id="simCanvas" width="1280" height="720"></canvas>
+        <div class="hud">
+          <div>
+            <span class="label">Speed</span>
+            <strong id="speedReadout">0.0 mph</strong>
+          </div>
+          <div>
+            <span class="label">Lean</span>
+            <strong id="leanReadout">0 deg</strong>
+          </div>
+          <div>
+            <span class="label">Mode</span>
+            <strong id="modeReadout">Mission</strong>
+          </div>
+          <div>
+            <span class="label">Safe Est.</span>
+            <strong id="safeSpeedReadout">0.0 mph</strong>
+          </div>
+          <div>
+            <span class="label">Freespin</span>
+            <strong id="freespinReadout">0.0 mph</strong>
+          </div>
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="Simulator controls">
+        <header>
+          <h1>2D OneWheel Simulator</h1>
+          <p>Balance the board by shifting rider lean while the hub motor chases your stance.</p>
+        </header>
+
+        <details class="collapsible" open>
+          <summary>Telemetry</summary>
+          <section class="estimate-panel" aria-label="Board speed estimate">
+            <div>
+              <span class="label">Expected Safe Riding Speed</span>
+              <strong id="safeSpeedPanel">0.0 mph</strong>
+            </div>
+            <div>
+              <span class="label">Freespin Estimate</span>
+              <strong id="freespinPanel">0.0 mph</strong>
+            </div>
+            <div>
+              <span class="label">Voltage</span>
+              <strong id="voltagePanel">0.0 V</strong>
+            </div>
+            <div>
+              <span class="label">Current</span>
+              <strong id="ampsPanel">0 A</strong>
+            </div>
+            <div>
+              <span class="label">Power Draw</span>
+              <strong id="wattsPanel">0 W</strong>
+            </div>
+            <div>
+              <span class="label">Consumption</span>
+              <strong id="consumptionPanel">0 Wh/mi</strong>
+            </div>
+            <meter id="reserveMeter" min="0" max="100" value="0"></meter>
+            <span id="reserveLabel" class="reserve-label">Torque reserve 0%</span>
+          </section>
+        </details>
+
+        <details class="collapsible">
+          <summary>Model Assumptions</summary>
+          <section class="assumption-panel" aria-label="Current model assumptions">
+            <p>Current calculations are approximate and intended for comparison, not safety prediction.</p>
+            <ul>
+              <li>Torque current, power load, thermal load, and speed ceiling are simplified rails.</li>
+              <li>Battery current and phase current are not separated yet.</li>
+              <li>Kv ceiling approximates voltage duty limit until duty cycle is modeled.</li>
+              <li>Motor temperature uses sustained watts, stator size, and cooling approximation.</li>
+              <li>Scrape recovery uses footpad contact geometry and rider lean direction.</li>
+            </ul>
+          </section>
+        </details>
+
+        <div class="control-grid">
+          <button id="restartButton" type="button" title="Restart">Restart</button>
+          <button id="pauseButton" type="button" title="Pause or resume">Pause</button>
+        </div>
+
+        <details class="collapsible" open>
+          <summary>Board Specs</summary>
+        <section class="spec-section" aria-label="Board specifications">
+          <label class="control">
+            <span>Tire preset</span>
+            <select id="tireSelect">
+              <option value="pint-slick">10.5 in slick</option>
+              <option value="gt-treaded" selected>11.5 in treaded</option>
+              <option value="growler">10.5 in growler</option>
+              <option value="trail">12.0 in trail</option>
+            </select>
+          </label>
+
+          <label class="control">
+            <span>Tire diameter <b id="tireDiameterValue">11.5 in</b></span>
+            <input id="tireDiameterSlider" type="range" min="9.5" max="22" step="0.1" value="11.5">
+          </label>
+
+          <label class="control">
+            <span>Motor preset</span>
+            <select id="motorSelect">
+              <option value="stock-750" selected>750 W hub</option>
+              <option value="torque-850">850 W torque hub</option>
+              <option value="highspeed-900">900 W speed hub</option>
+              <option value="vesc-1200">1200 W VESC hub</option>
+            </select>
+          </label>
+
+          <label class="control">
+            <span>Motor Kv <b id="motorKvValue">15.2 rpm/V</b></span>
+            <input id="motorKvSlider" type="range" min="10" max="22" step="0.1" value="15.2">
+          </label>
+
+          <label class="control">
+            <span>Sustained motor watts <b id="motorPowerValue">750 W</b></span>
+            <input id="motorPowerSlider" type="range" min="400" max="1800" step="25" value="750">
+          </label>
+
+          <label class="control">
+            <span>Stator size <b id="statorSizeValue">100%</b></span>
+            <input id="statorSizeSlider" type="range" min="60" max="180" step="5" value="100">
+          </label>
+
+          <label class="control">
+            <span>Motor start temp <b id="motorStartTempValue">30 C</b></span>
+            <input id="motorStartTempSlider" type="range" min="0" max="90" step="1" value="30">
+          </label>
+
+          <label class="control">
+            <span>Motor temp limit <b id="motorTempLimitValue">95 C</b></span>
+            <input id="motorTempLimitSlider" type="range" min="60" max="140" step="1" value="95">
+          </label>
+
+          <label class="control">
+            <span>Battery preset</span>
+            <select id="batterySelect">
+              <option value="15s2p">15s2p 63 V pack</option>
+              <option value="18s2p" selected>18s2p 75.6 V pack</option>
+              <option value="20s2p">20s2p 84 V pack</option>
+              <option value="20s3p">20s3p 84 V high current</option>
+            </select>
+          </label>
+
+          <label class="control">
+            <span>Battery series <b id="batterySeriesValue">18s</b></span>
+            <input id="batterySeriesSlider" type="range" min="12" max="40" step="1" value="18">
+          </label>
+
+          <label class="control">
+            <span>Pack current <b id="packCurrentValue">40 A</b></span>
+            <input id="packCurrentSlider" type="range" min="20" max="110" step="1" value="40">
+          </label>
+
+          <label class="control">
+            <span>Battery percentage <b id="batteryPercentValue">75%</b></span>
+            <input id="batteryPercentSlider" type="range" min="5" max="100" step="1" value="75">
+          </label>
+
+          <label class="toggle-control">
+            <input id="batteryDrainToggle" type="checkbox" checked>
+            <span>Simulate battery drain</span>
+          </label>
+
+          <label class="control">
+            <span>Drain rate <b id="drainRateValue">20x</b></span>
+            <input id="drainRateSlider" type="range" min="1" max="80" step="1" value="20">
+          </label>
+
+          <label class="control">
+            <span>Rider weight <b id="riderWeightValue">180 lb</b></span>
+            <input id="riderWeightSlider" type="range" min="90" max="350" step="5" value="180">
+          </label>
+
+          <label class="control">
+            <span>Rider height <b id="riderHeightValue">72 in</b></span>
+            <input id="riderHeightSlider" type="range" min="48" max="84" step="1" value="72">
+          </label>
+
+          <label class="control">
+            <span>Incline angle <b id="inclineAngleValue">0 deg</b></span>
+            <input id="inclineAngleSlider" type="range" min="-6" max="45" step="0.5" value="0">
+          </label>
+        </section>
+        </details>
+
+        <details class="collapsible" open>
+          <summary>Rider And Controls</summary>
+          <div class="section-stack">
+            <label class="control">
+              <span>Rider lean</span>
+              <input id="leanSlider" type="range" min="-45" max="45" step="1" value="0">
+            </label>
+
+            <fieldset>
+              <legend>Lean function</legend>
+              <label><input type="radio" name="leanMode" value="default" checked> Default</label>
+              <label><input type="radio" name="leanMode" value="balance"> Balance</label>
+            </fieldset>
+          </div>
+        </details>
+
+        <details class="collapsible" open>
+          <summary>Fall Limits</summary>
+          <section class="amp-panel" aria-label="Rider fall limits">
+            <div>
+              <span class="label">Requested Amps</span>
+              <strong id="requestedAmpsPanel">0 A</strong>
+            </div>
+            <meter id="requestedAmpsMeter" min="0" max="100" value="0"></meter>
+            <span id="requestedAmpsLabel" class="reserve-label">0% of pack current</span>
+
+          <div>
+            <span class="label">Power Load</span>
+            <strong id="powerLoadPanel">0 / 750 W</strong>
+          </div>
+          <meter id="powerLoadMeter" min="0" max="100" value="0"></meter>
+          <span id="powerLoadLabel" class="reserve-label">0% of sustained rating</span>
+
+            <div>
+              <span class="label">Motor Temp</span>
+              <strong id="motorTempPanel">30 C</strong>
+            </div>
+            <meter id="motorTempMeter" min="0" max="100" value="0"></meter>
+            <span id="motorTempLabel" class="reserve-label">Ambient to limit</span>
+
+            <div>
+              <span class="label">Kv Speed Ceiling</span>
+              <strong id="kvLimitPanel">0%</strong>
+            </div>
+            <meter id="kvLimitMeter" min="0" max="100" value="0"></meter>
+            <span id="kvLimitLabel" class="reserve-label">0% of freespin speed</span>
+          </section>
+        </details>
+
+        <details class="collapsible" open>
+          <summary>World And Ride Mode</summary>
+          <div class="section-stack">
+            <label class="control">
+              <span>Motor response</span>
+              <input id="motorSlider" type="range" min="35" max="150" step="1" value="88">
+            </label>
+
+            <label class="control">
+              <span>Terrain roughness</span>
+              <input id="terrainSlider" type="range" min="0" max="100" step="1" value="34">
+            </label>
+
+            <fieldset>
+              <legend>Ride mode</legend>
+              <label><input type="radio" name="rideMode" value="Mission" checked> Mission</label>
+              <label><input type="radio" name="rideMode" value="Delirium"> Delirium</label>
+              <label><input type="radio" name="rideMode" value="Elevated"> Elevated</label>
+            </fieldset>
+          </div>
+        </details>
+
+        <div class="keys" aria-label="Keyboard controls">
+          <span><kbd>A</kbd>/<kbd>D</kbd> lean</span>
+          <span><kbd>Space</kbd> pause</span>
+          <span><kbd>R</kbd> restart</span>
+        </div>
+      </aside>
+    </main>
+
+    <script src="./simulator.js"></script>
+  </body>
+</html>
