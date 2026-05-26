@@ -4,6 +4,7 @@ This file records shipped simulator, configuration, workflow, and runtime behavi
 
 ## Live Entries
 
+16. 2026-05-26 08:22:47: Added a board width slider that adjusts the center gap between the two footpads while feeding the shared board geometry used for rail drawing and scrape contact.
 15. 2026-05-26 08:07:06: Added rapid `A`/`D` tap-combo boosts so double and repeated taps snap rider lean farther while held keys keep the smooth lean rate.
 14. 2026-05-26 08:05:30: Added a visual-only 10% extension past both ends of the rider knee-bend pose so full stand is slightly taller and full crouch is slightly deeper without changing slider or physics ranges.
 13. 2026-05-26 07:56:18: Increased `W`/`S` knee bend keyboard speed to 10x the rider lean rate for near-instant crouch and stand transitions.

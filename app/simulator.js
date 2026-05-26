@@ -37,6 +37,7 @@ const tireDiameterSlider = document.querySelector("#tireDiameterSlider");
 const tirePsiSlider = document.querySelector("#tirePsiSlider");
 const tireCompoundSelect = document.querySelector("#tireCompoundSelect");
 const footpadLengthSlider = document.querySelector("#footpadLengthSlider");
+const boardWidthSlider = document.querySelector("#boardWidthSlider");
 const boardHeightSlider = document.querySelector("#boardHeightSlider");
 const motorKvSlider = document.querySelector("#motorKvSlider");
 const motorPowerSlider = document.querySelector("#motorPowerSlider");
@@ -63,6 +64,7 @@ const surfaceSelect = document.querySelector("#surfaceSelect");
 const tireDiameterValue = document.querySelector("#tireDiameterValue");
 const tirePsiValue = document.querySelector("#tirePsiValue");
 const footpadLengthValue = document.querySelector("#footpadLengthValue");
+const boardWidthValue = document.querySelector("#boardWidthValue");
 const boardHeightValue = document.querySelector("#boardHeightValue");
 const motorKvValue = document.querySelector("#motorKvValue");
 const motorPowerValue = document.querySelector("#motorPowerValue");
@@ -109,6 +111,7 @@ const state = {
   tirePsi: 18,
   tireCompound: "medium",
   footpadLength: 48,
+  boardWidth: 188,
   boardHeight: 9,
   motorKv: 15.2,
   motorPower: 750,
@@ -541,10 +544,12 @@ function getWheelRadius() {
 
 function getBoardGeometry(wheelRadius) {
   const visualCenterOffset = state.boardHeight - 2;
-  const railHalf = 84 + state.footpadLength;
+  const centerGap = state.boardWidth / 2;
+  const railHalf = centerGap + state.footpadLength - 10;
   return {
     railHalf,
     padLength: state.footpadLength,
+    boardWidth: state.boardWidth,
     railY: visualCenterOffset,
     padY: state.boardHeight
   };
@@ -1179,6 +1184,7 @@ function updateHud() {
   tireDiameterValue.textContent = `${state.tireDiameter.toFixed(1)} in`;
   tirePsiValue.textContent = `${Math.round(state.tirePsi)} psi`;
   footpadLengthValue.textContent = `${Math.round(state.footpadLength)} px`;
+  boardWidthValue.textContent = `${Math.round(state.boardWidth)} px`;
   boardHeightValue.textContent = `${Math.round(state.boardHeight)} px drop`;
   motorKvValue.textContent = `${state.motorKv.toFixed(1)} rpm/V`;
   motorPowerValue.textContent = `${Math.round(state.motorPower)} W`;
@@ -1338,6 +1344,7 @@ function getBoardSpec(tire = getTireSpec()) {
   return {
     wheelRadius,
     footpadLength: state.footpadLength,
+    boardWidth: state.boardWidth,
     boardHeight: state.boardHeight,
     railHalf: geometry.railHalf,
     railY: geometry.railY,
@@ -1762,6 +1769,10 @@ tireDiameterSlider.addEventListener("input", () => {
 
 footpadLengthSlider.addEventListener("input", () => {
   state.footpadLength = Number(footpadLengthSlider.value);
+});
+
+boardWidthSlider.addEventListener("input", () => {
+  state.boardWidth = Number(boardWidthSlider.value);
 });
 
 boardHeightSlider.addEventListener("input", () => {
