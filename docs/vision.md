@@ -23,80 +23,81 @@ The first estimator is intentionally conservative and educational, not a safety 
 - Motor temperature from sustained watt draw, temporary overload, stator thermal mass, start temperature, thermal limit, and cooling back toward ambient/start temperature.
 - Nose scrape and tail slide recovery from board angle, footpad contact, recovery lean, and a countdown window.
 
-## Realism Phases
+## Phase 0: Prototype Foundation
 
-### Phase 0: Prototype Foundation
+- [x] Keep the side-scroller world as the primary experience.
+- [x] Maintain the right-side collapsible control panel for fast access to settings.
+- [x] Preserve estimate panels, live graph, Balance mode, scrape recovery, and board/rider visualization.
+- [x] Keep all current calculations labeled as approximate until validated.
 
-- Keep the side-scroller world as the primary experience.
-- Maintain the right-side collapsible control panel for fast access to settings.
-- Preserve the current estimate panels, live graph, Balance mode, scrape recovery, and board/rider visualization.
-- Keep all current calculations labeled as approximate until validated.
+## Phase 1: Clear Approximation And UX
 
-### Phase 1: Clear Approximation And UX
+- [x] Rename limit concepts to realistic terms: torque current limit, temporary power overload, motor thermal limit, and voltage duty limit.
+- [x] Keep the existing simple model visible and label every estimate as approximate.
+- [x] Show assumptions beside the graph so users know what is simulated and what is guessed.
+- [x] Show the exact scrape/fall cause during recovery: torque current, power load, duty ceiling, thermal limit, or traction loss.
+- [x] Add a recovery quality meter that tells the rider whether their lean is helping or making the scrape worse.
+- [x] Add slow motion during the first moment of a scrape so users can react and learn.
 
-- Rename limit concepts to realistic terms: torque current limit, temporary power overload, motor thermal limit, and voltage duty limit.
-- Keep the existing simple model visible and label every estimate as approximate.
-- Show assumptions beside the graph so users know what is simulated and what is guessed.
-- Show the exact scrape/fall cause during recovery: torque current, power load, duty ceiling, thermal limit, or traction loss.
-- Add a recovery quality meter that tells the rider whether their lean is helping or making the scrape worse.
-- Add slow motion during the first moment of a scrape so users can react and learn.
+## Phase 2: Electrical Model
 
-Status: partially implemented. The simulator now includes a model assumptions panel, scrape cause text, and a recovery quality meter. Slow motion is still pending.
+- [x] Split battery current and phase current instead of using one amp value.
+- [ ] Split motor current from phase current if needed for deeper motor modeling.
+- [ ] Model pack voltage from series count, cell voltage curve, internal resistance, sag, and state of charge.
+- [ ] Add controller settings for battery current limit, phase current limit, duty limit, field weakening, and cutoff voltage.
+- [x] Calculate approximate duty cycle from motor Kv, speed, tire diameter, and pack voltage.
+- [x] Replace the current approximate "Kv ceiling" rail with a duty-cycle rail.
+- [x] Keep freespin speed as a derived reference, not the main failure metric.
+- [ ] Add separate graph traces for voltage sag and field weakening.
 
-### Phase 2: Electrical Model
+## Phase 3: Motor And Thermal Model
 
-- Split battery current, phase current, and motor current instead of using one amp value.
-- Model pack voltage from series count, cell voltage curve, internal resistance, sag, and state of charge.
-- Add controller settings for battery current limit, phase current limit, duty limit, field weakening, and cutoff voltage.
-- Calculate duty cycle and back-EMF from motor Kv, speed, tire diameter, and pack voltage.
-- Replace the current approximate "Kv ceiling" rail with a duty-cycle rail.
-- Keep freespin speed as a derived reference, not the main failure metric.
-- Add separate graph traces for battery amps, phase amps, voltage sag, duty cycle, and field weakening.
+- [ ] Add motor resistance, Kv/Kt relationship, copper losses, and efficiency.
+- [x] Model stator size as thermal mass and cooling surface area.
+- [x] Track motor temperature over time.
+- [ ] Track controller and battery temperature over time.
+- [x] Turn the watts limit into a thermal headroom curve instead of a fixed instant-crash number.
+- [ ] Add temporary peak limits and sustained limits.
+- [ ] Add thermal rollback before crash: gradually reduce available torque/power as temperatures climb.
+- [x] Let airflow/cooling change with speed.
 
-### Phase 3: Motor And Thermal Model
+## Phase 4: Tire, Terrain, And Rider Physics
 
-- Add motor resistance, Kv/Kt relationship, copper losses, and efficiency.
-- Model stator size as thermal mass and cooling surface area.
-- Track controller, motor, and battery temperature over time.
-- Turn the watts limit into a thermal headroom curve instead of a fixed number.
-- Add temporary peak limits and sustained limits.
-- Add thermal rollback before crash: gradually reduce available torque/power as temperatures climb.
-- Track controller temperature and battery temperature separately from motor temperature.
-- Let airflow/cooling change with speed.
+- [x] Model tire radius from tire diameter.
+- [ ] Model tire pressure, contact patch, rolling resistance, and grip coefficient.
+- [ ] Add traction loss separately from torque saturation.
+- [x] Convert terrain and incline into slope angle used by the simulator.
+- [ ] Add surface friction, bumps, and rolling losses.
+- [x] Model rider weight and rider height.
+- [ ] Model rider stance, center of mass, lean rate, and board pitch dynamics more realistically.
+- [ ] Add a visible rider center-of-mass marker and balance line.
+- [x] Model footpad contact during nose scrapes and tail slides as actual geometry.
+- [ ] Add surface presets such as asphalt, gravel, wet pavement, grass, and loose dirt.
 
-### Phase 4: Tire, Terrain, And Rider Physics
+## Phase 5: Board Behavior
 
-- Model tire radius, pressure, contact patch, rolling resistance, and grip coefficient.
-- Add traction loss separately from torque saturation.
-- Convert terrain into actual slope angle, surface friction, bumps, and rolling losses.
-- Model rider weight, stance, center of mass, lean rate, and board pitch dynamics.
-- Add a visible rider center-of-mass marker and balance line.
-- Model footpad contact during nose scrapes and tail slides as actual geometry.
-- Add surface presets such as asphalt, gravel, wet pavement, grass, and loose dirt.
+- [ ] Add pushback behavior, tiltback, haptic buzz, alerts, and controller response modes.
+- [x] Simulate nosedive causes separately enough to distinguish current, duty, power, thermal, and balance failures.
+- [ ] Add explicit low-voltage sag and traction slip failure modes.
+- [ ] Let users compare presets and custom builds.
+- [ ] Add board presets such as Pint, XR, GT, trail VESC, and high-speed VESC.
+- [ ] Add custom preset saving and comparison.
+- [ ] Add ride modes that change response curves, not only labels.
 
-### Phase 5: Board Behavior
+## Phase 6: Training And Playback
 
-- Add pushback behavior, tiltback, haptic buzz, alerts, and controller response modes.
-- Simulate nosedive causes separately: torque saturation, duty ceiling, low-voltage sag, thermal rollback, and traction slip.
-- Let users compare presets and custom builds.
-- Add board presets such as Pint, XR, GT, trail VESC, and high-speed VESC.
-- Add custom preset saving and comparison.
-- Add ride modes that change response curves, not only labels.
+- [ ] Let users replay a hill climb, acceleration run, braking run, or rough-terrain section.
+- [ ] Add ghost traces so a user can compare two setups on the same scenario.
+- [ ] Add "why did I fall?" summaries after crashes.
+- [ ] Add timeline scrubbing for voltage, current, duty, temperature, speed, lean, and scrape state.
 
-### Phase 6: Training And Playback
+## Phase 7: Validation
 
-- Let users replay a hill climb, acceleration run, braking run, or rough-terrain section.
-- Add ghost traces so a user can compare two setups on the same scenario.
-- Add "why did I fall?" summaries after crashes.
-- Add timeline scrubbing for voltage, current, duty, temperature, speed, lean, and scrape state.
-
-### Phase 7: Validation
-
-- Import or enter real ride logs from VESC or similar controllers.
-- Compare simulated voltage, current, duty cycle, speed, and temperature against real data.
-- Tune default presets from measured behavior instead of guesses.
-- Keep a visible confidence level for each prediction.
-- Build a small corpus of reference runs: flat acceleration, sustained climb, low battery push, high-speed duty limit, and thermal climb.
+- [ ] Import or enter real ride logs from VESC or similar controllers.
+- [ ] Compare simulated voltage, current, duty cycle, speed, and temperature against real data.
+- [ ] Tune default presets from measured behavior instead of guesses.
+- [ ] Keep a visible confidence level for each prediction.
+- [ ] Build a small corpus of reference runs: flat acceleration, sustained climb, low battery push, high-speed duty limit, and thermal climb.
 
 ## Next Steps
 

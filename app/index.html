@@ -55,10 +55,14 @@
               <span class="label">Voltage</span>
               <strong id="voltagePanel">0.0 V</strong>
             </div>
-            <div>
-              <span class="label">Current</span>
-              <strong id="ampsPanel">0 A</strong>
-            </div>
+          <div>
+            <span class="label">Battery Amps</span>
+            <strong id="ampsPanel">0 A</strong>
+          </div>
+          <div>
+            <span class="label">Phase Amps</span>
+            <strong id="phaseAmpsPanel">0 A</strong>
+          </div>
             <div>
               <span class="label">Power Draw</span>
               <strong id="wattsPanel">0 W</strong>
@@ -77,9 +81,9 @@
           <section class="assumption-panel" aria-label="Current model assumptions">
             <p>Current calculations are approximate and intended for comparison, not safety prediction.</p>
             <ul>
-              <li>Torque current, power load, thermal load, and speed ceiling are simplified rails.</li>
-              <li>Battery current and phase current are not separated yet.</li>
-              <li>Kv ceiling approximates voltage duty limit until duty cycle is modeled.</li>
+              <li>Torque current, power load, thermal load, and duty cycle are simplified rails.</li>
+              <li>Battery current and phase current are now separated with approximate conversion.</li>
+              <li>Duty cycle approximates voltage headroom from speed, tire size, Kv, and pack voltage.</li>
               <li>Motor temperature uses sustained watts, stator size, and cooling approximation.</li>
               <li>Scrape recovery uses footpad contact geometry and rider lean direction.</li>
             </ul>
@@ -107,6 +111,11 @@
           <label class="control">
             <span>Tire diameter <b id="tireDiameterValue">11.5 in</b></span>
             <input id="tireDiameterSlider" type="range" min="9.5" max="22" step="0.1" value="11.5">
+          </label>
+
+          <label class="control">
+            <span>Footpad length <b id="footpadLengthValue">48 px</b></span>
+            <input id="footpadLengthSlider" type="range" min="36" max="120" step="2" value="48">
           </label>
 
           <label class="control">
@@ -220,7 +229,7 @@
               <strong id="requestedAmpsPanel">0 A</strong>
             </div>
             <meter id="requestedAmpsMeter" min="0" max="100" value="0"></meter>
-            <span id="requestedAmpsLabel" class="reserve-label">0% of pack current</span>
+            <span id="requestedAmpsLabel" class="reserve-label">0% of phase current</span>
 
           <div>
             <span class="label">Power Load</span>
@@ -237,11 +246,11 @@
             <span id="motorTempLabel" class="reserve-label">Ambient to limit</span>
 
             <div>
-              <span class="label">Kv Speed Ceiling</span>
-              <strong id="kvLimitPanel">0%</strong>
+              <span class="label">Duty Limit</span>
+              <strong id="dutyLimitPanel">0%</strong>
             </div>
-            <meter id="kvLimitMeter" min="0" max="100" value="0"></meter>
-            <span id="kvLimitLabel" class="reserve-label">0% of freespin speed</span>
+            <meter id="dutyLimitMeter" min="0" max="100" value="0"></meter>
+            <span id="dutyLimitLabel" class="reserve-label">0% duty cycle</span>
           </section>
         </details>
 

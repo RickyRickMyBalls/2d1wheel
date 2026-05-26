@@ -54,7 +54,7 @@ select {
   right: 18px;
   bottom: 14px;
   color: var(--muted);
-  content: "Yellow motor | Teal grip | White incline | Blue volts | Red amps | Violet watts | Orange temp";
+  content: "Yellow motor | Teal grip | White incline | Blue volts | Red batt A | Violet watts | Orange temp";
   font-size: 0.78rem;
   pointer-events: none;
 }

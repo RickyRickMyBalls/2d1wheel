@@ -10,6 +10,7 @@ const safeSpeedPanel = document.querySelector("#safeSpeedPanel");
 const freespinPanel = document.querySelector("#freespinPanel");
 const voltagePanel = document.querySelector("#voltagePanel");
 const ampsPanel = document.querySelector("#ampsPanel");
+const phaseAmpsPanel = document.querySelector("#phaseAmpsPanel");
 const wattsPanel = document.querySelector("#wattsPanel");
 const consumptionPanel = document.querySelector("#consumptionPanel");
 const reserveMeter = document.querySelector("#reserveMeter");
@@ -23,9 +24,9 @@ const powerLoadLabel = document.querySelector("#powerLoadLabel");
 const motorTempPanel = document.querySelector("#motorTempPanel");
 const motorTempMeter = document.querySelector("#motorTempMeter");
 const motorTempLabel = document.querySelector("#motorTempLabel");
-const kvLimitPanel = document.querySelector("#kvLimitPanel");
-const kvLimitMeter = document.querySelector("#kvLimitMeter");
-const kvLimitLabel = document.querySelector("#kvLimitLabel");
+const dutyLimitPanel = document.querySelector("#dutyLimitPanel");
+const dutyLimitMeter = document.querySelector("#dutyLimitMeter");
+const dutyLimitLabel = document.querySelector("#dutyLimitLabel");
 const leanSlider = document.querySelector("#leanSlider");
 const motorSlider = document.querySelector("#motorSlider");
 const terrainSlider = document.querySelector("#terrainSlider");
@@ -33,6 +34,7 @@ const tireSelect = document.querySelector("#tireSelect");
 const motorSelect = document.querySelector("#motorSelect");
 const batterySelect = document.querySelector("#batterySelect");
 const tireDiameterSlider = document.querySelector("#tireDiameterSlider");
+const footpadLengthSlider = document.querySelector("#footpadLengthSlider");
 const motorKvSlider = document.querySelector("#motorKvSlider");
 const motorPowerSlider = document.querySelector("#motorPowerSlider");
 const statorSizeSlider = document.querySelector("#statorSizeSlider");
@@ -47,6 +49,7 @@ const riderWeightSlider = document.querySelector("#riderWeightSlider");
 const riderHeightSlider = document.querySelector("#riderHeightSlider");
 const inclineAngleSlider = document.querySelector("#inclineAngleSlider");
 const tireDiameterValue = document.querySelector("#tireDiameterValue");
+const footpadLengthValue = document.querySelector("#footpadLengthValue");
 const motorKvValue = document.querySelector("#motorKvValue");
 const motorPowerValue = document.querySelector("#motorPowerValue");
 const statorSizeValue = document.querySelector("#statorSizeValue");
@@ -79,7 +82,9 @@ const state = {
   riderWeight: 180,
   riderHeight: 72,
   inclineAngle: 0,
+  cameraZoom: 1,
   tireDiameter: 11.5,
+  footpadLength: 48,
   motorKv: 15.2,
   motorPower: 750,
   statorSize: 100,
@@ -101,13 +106,14 @@ const state = {
     amps: 0,
     power: 0,
     temp: 0,
-    kv: 0
+    duty: 0
   },
   paused: false,
   crashed: false,
   scrapeState: "none",
   scrapeTimer: 0,
   scrapeWindow: 2,
+  scrapeSlowMoWindow: 0.55,
   scrapeType: "nose",
   scrapeCause: "",
   recoveryQuality: 0,
@@ -121,12 +127,13 @@ const state = {
     inclineAngle: 0,
     voltage: 0,
     amps: 0,
+    phaseAmps: 0,
     watts: 0,
     whPerMile: 0,
     ampLimit: 0,
     powerLoad: 0,
     tempLimit: 0,
-    kvLimit: 0
+    dutyLimit: 0
   },
   forceGraph: {
     x: 0,
@@ -193,7 +200,7 @@ function reset() {
   state.balanceVelocity = 0;
   state.requestedAmps = 0;
   state.overLimitTime = 0;
-  state.fallLimits = { amps: 0, power: 0, temp: 0, kv: 0 };
+  state.fallLimits = { amps: 0, power: 0, temp: 0, duty: 0 };
   state.motorTemp = state.motorStartTemp;
   state.paused = false;
   state.crashed = false;
@@ -223,14 +230,23 @@ function terrainSlope(x) {
   return (terrainHeight(x + 4) - terrainHeight(x - 4)) / 8 + Math.tan(degreesToRadians(state.inclineAngle));
 }
 
+function getSimulationDt(dt) {
+  if (state.scrapeState !== "scrape") return dt;
+  if (state.scrapeTimer > state.scrapeSlowMoWindow) return dt;
+  return dt * 0.42;
+}
+
 function update(dt) {
   if (state.paused || state.crashed) return;
+
+  const rawDt = dt;
+  dt = getSimulationDt(dt);
 
   if (state.keys.has("KeyA")) state.targetLean -= 86 * dt;
   if (state.keys.has("KeyD")) state.targetLean += 86 * dt;
   state.targetLean = clamp(state.targetLean, -maxLeanDegrees, maxLeanDegrees);
   leanSlider.value = String(Math.round(state.targetLean));
-  updateScrapeRecovery(dt);
+  updateScrapeRecovery(rawDt);
 
   const mode = modes[state.mode];
   const slope = Math.atan(terrainSlope(state.x));
@@ -238,7 +254,7 @@ function update(dt) {
   const effectiveLean = state.leanMode === "balance" ? state.targetLean + balance.assistLean : state.targetLean;
   const leanRadians = degreesToRadians(effectiveLean + mode.noseOffset);
   const estimate = calculateEstimate();
-  const ampLimit = getBatterySpec().current;
+  const ampLimit = getPhaseCurrentLimit();
   const ampStress = state.leanMode === "balance" ? clamp(1 - Math.max(0, state.requestedAmps - ampLimit) / ampLimit, 0.22, 1) : 1;
   const reserveAssist = clamp(estimate.reserve / 70, 0.45, 1.18) * ampStress;
   const targetAngle = slope * 0.35 + leanRadians * 0.7;
@@ -283,14 +299,25 @@ function draw() {
 
   ctx.clearRect(0, 0, width, height);
   drawSky(width, height);
+  ctx.save();
+  applyWorldZoom(width, height);
   drawTerrain(width, height, groundY, cameraX);
   drawBoard(width * 0.34, groundY + terrainHeight(state.x), state.boardAngle);
   drawScrapeSparks(width * 0.34, groundY + terrainHeight(state.x), state.boardAngle);
+  ctx.restore();
   drawBalanceGauge(width, height);
   drawForceGraph(width, height);
   drawScrapeWarning(width, height);
   drawCrash(width, height);
   updateHud();
+}
+
+function applyWorldZoom(width, height) {
+  const anchorX = width * 0.34;
+  const anchorY = height * 0.7;
+  ctx.translate(anchorX, anchorY);
+  ctx.scale(state.cameraZoom, state.cameraZoom);
+  ctx.translate(-anchorX, -anchorY);
 }
 
 function drawSky(width, height) {
@@ -354,7 +381,7 @@ function drawBoard(x, groundY, angle) {
   ctx.translate(x, wheelY);
 
   ctx.save();
-  ctx.rotate(-state.x * 0.045);
+  ctx.rotate(state.x * 0.045);
   ctx.beginPath();
   ctx.arc(0, 0, wheelRadius, 0, Math.PI * 2);
   ctx.fillStyle = "#070909";
@@ -388,8 +415,8 @@ function drawBoard(x, groundY, angle) {
   drawOnewheelRails(railHalf, railY);
   roundedRect(-railHalf - 10, padY - 8, padLength, 18, 9, "#f3f0e8");
   roundedRect(railHalf - padLength + 10, padY - 8, padLength, 18, 9, "#f3f0e8");
-  roundedRect(-railHalf + 8, padY - 16, 74, 8, 4, "#5fb8a5");
-  roundedRect(railHalf - 82, padY - 16, 74, 8, 4, "#e7b84f");
+  roundedRect(-railHalf + 8, padY - 16, Math.max(24, padLength - 22), 8, 4, "#5fb8a5");
+  roundedRect(railHalf - padLength + 18, padY - 16, Math.max(24, padLength - 22), 8, 4, "#e7b84f");
 
   const scrapeRiderLean = state.scrapeState === "scrape" ? (state.scrapeType === "nose" ? 0.28 : -0.28) : 0;
   drawRider(0, padY - 12, degreesToRadians(state.riderLean) + scrapeRiderLean, 76);
@@ -401,11 +428,12 @@ function getWheelRadius() {
 }
 
 function getBoardGeometry(wheelRadius) {
+  const visualCenterOffset = 7;
   return {
     railHalf: 132,
-    padLength: 96,
-    railY: -wheelRadius * 0.3,
-    padY: -wheelRadius * 0.3 + 2
+    padLength: state.footpadLength,
+    railY: visualCenterOffset,
+    padY: visualCenterOffset + 2
   };
 }
 
@@ -595,6 +623,11 @@ function drawScrapeWarning(width, height) {
   ctx.fillStyle = "#f3f0e8";
   ctx.font = "700 18px system-ui, sans-serif";
   ctx.fillText(`${remaining.toFixed(1)}s`, centerX, y + 48);
+  if (state.scrapeTimer < state.scrapeSlowMoWindow) {
+    ctx.fillStyle = "#5fb8a5";
+    ctx.font = "700 12px system-ui, sans-serif";
+    ctx.fillText("slow motion", centerX, y + 72);
+  }
   roundedRect(centerX - barWidth / 2, y + 60, barWidth, barHeight, 5, "rgba(243, 240, 232, 0.22)");
   roundedRect(centerX - barWidth / 2, y + 60, barWidth * progress, barHeight, 5, progress < 0.35 ? "#ef6b5b" : "#e7b84f");
   ctx.fillStyle = state.recoveryQuality > 0.62 ? "#5fb8a5" : "#ef6b5b";
@@ -621,7 +654,7 @@ function drawBalanceGauge(width, height) {
     {
       label: "A",
       value: state.fallLimits.amps,
-      detail: `${Math.round(state.requestedAmps)}/${Math.round(getBatterySpec().current)}A`,
+      detail: `${Math.round(state.requestedAmps)}/${Math.round(getPhaseCurrentLimit())}A`,
       color: "#ef6b5b",
       radius: radius + 18
     },
@@ -640,14 +673,14 @@ function drawBalanceGauge(width, height) {
       radius: radius - 18
     },
     {
-      label: "Kv",
-      value: state.fallLimits.kv,
-      detail: `${Math.abs(state.velocity * 1.45).toFixed(1)}/${(calculateEstimate().freespin * 0.92).toFixed(1)}mph`,
+      label: "D",
+      value: state.fallLimits.duty,
+      detail: `${Math.round(state.fallLimits.duty * 100)}% duty`,
       color: "#74a7ff",
       radius: radius - 36
     }
   ];
-  const strongestLimit = Math.max(state.fallLimits.amps, state.fallLimits.power, state.fallLimits.temp, state.fallLimits.kv);
+  const strongestLimit = Math.max(state.fallLimits.amps, state.fallLimits.power, state.fallLimits.temp, state.fallLimits.duty);
 
   ctx.save();
   ctx.lineCap = "round";
@@ -729,7 +762,7 @@ function drawForceGraph(width, height) {
   drawGraphLine(history, "ampLimit", x, y, graphWidth, graphHeight, "#ef6b5b", 1);
   drawGraphLine(history, "powerLoad", x, y, graphWidth, graphHeight, "#b891ff", 1);
   drawGraphLine(history, "tempLimit", x, y, graphWidth, graphHeight, "#ff9d66", 1);
-  drawGraphLine(history, "kvLimit", x, y, graphWidth, graphHeight, "#74a7ff", 1);
+  drawGraphLine(history, "dutyLimit", x, y, graphWidth, graphHeight, "#74a7ff", 1);
 
   ctx.fillStyle = "#f3f0e8";
   ctx.font = "700 12px system-ui, sans-serif";
@@ -931,23 +964,25 @@ function updateHud() {
   freespinPanel.textContent = `${estimate.freespin.toFixed(1)} mph`;
   voltagePanel.textContent = `${state.latestForces.voltage.toFixed(1)} V`;
   ampsPanel.textContent = `${Math.round(state.latestForces.amps)} A`;
+  phaseAmpsPanel.textContent = `${Math.round(state.latestForces.phaseAmps)} A`;
   wattsPanel.textContent = `${Math.round(state.latestForces.watts)} W`;
   consumptionPanel.textContent = `${Math.round(state.latestForces.whPerMile)} Wh/mi`;
   reserveMeter.value = estimate.reserve;
   reserveLabel.textContent = `Torque reserve ${Math.round(estimate.reserve)}% at ${estimate.packVoltage.toFixed(1)} V`;
   requestedAmpsPanel.textContent = `${Math.round(state.requestedAmps)} A`;
   requestedAmpsMeter.value = Math.min(100, state.fallLimits.amps * 100);
-  requestedAmpsLabel.textContent = `${Math.round(state.fallLimits.amps * 100)}% of pack current`;
+  requestedAmpsLabel.textContent = `${Math.round(state.fallLimits.amps * 100)}% of phase current`;
   powerLoadPanel.textContent = `${Math.round(state.latestForces.watts)} / ${Math.round(state.motorPower)} W`;
   powerLoadMeter.value = Math.min(100, state.fallLimits.power * 100);
   powerLoadLabel.textContent = `${Math.round(state.fallLimits.power * 100)}% of sustained rating`;
   motorTempPanel.textContent = `${Math.round(state.motorTemp)} C`;
   motorTempMeter.value = Math.min(100, state.fallLimits.temp * 100);
   motorTempLabel.textContent = `${Math.round(state.fallLimits.temp * 100)}% of temp limit`;
-  kvLimitPanel.textContent = `${Math.round(state.fallLimits.kv * 100)}%`;
-  kvLimitMeter.value = Math.min(100, state.fallLimits.kv * 100);
-  kvLimitLabel.textContent = `${Math.round(state.fallLimits.kv * 100)}% of freespin speed`;
+  dutyLimitPanel.textContent = `${Math.round(state.fallLimits.duty * 100)}%`;
+  dutyLimitMeter.value = Math.min(100, state.fallLimits.duty * 100);
+  dutyLimitLabel.textContent = `${Math.round(state.fallLimits.duty * 100)}% duty cycle`;
   tireDiameterValue.textContent = `${state.tireDiameter.toFixed(1)} in`;
+  footpadLengthValue.textContent = `${Math.round(state.footpadLength)} px`;
   motorKvValue.textContent = `${state.motorKv.toFixed(1)} rpm/V`;
   motorPowerValue.textContent = `${Math.round(state.motorPower)} W`;
   statorSizeValue.textContent = `${Math.round(state.statorSize)}%`;
@@ -1092,16 +1127,16 @@ function updateBalanceMode(dt, slope) {
 
   const battery = getBatterySpec();
   const requested = (
-    Math.abs(leanDemand) * battery.current * 0.92 +
-    Math.abs(correctionDemand) * battery.current * 0.48 +
-    Math.max(0, terrainDemand) * battery.current * 0.55 +
-    speedDemand * battery.current * 0.18
+    Math.abs(leanDemand) * getPhaseCurrentLimit() * 0.48 +
+    Math.abs(correctionDemand) * getPhaseCurrentLimit() * 0.28 +
+    Math.max(0, terrainDemand) * getPhaseCurrentLimit() * 0.32 +
+    speedDemand * getPhaseCurrentLimit() * 0.12
   );
   state.requestedAmps = requested;
 
   const limits = calculateFallLimits();
   state.fallLimits = limits;
-  const strongestLimit = Math.max(limits.amps, limits.watts, limits.kv);
+  const strongestLimit = Math.max(limits.amps, limits.power, limits.temp, limits.duty);
   if (strongestLimit > 1) {
     state.overLimitTime += dt * strongestLimit;
   } else {
@@ -1118,39 +1153,49 @@ function updateBalanceMode(dt, slope) {
   };
 }
 
-function getAmpRatio() {
-  return state.requestedAmps / Math.max(1, getBatterySpec().current);
+function getPhaseCurrentLimit() {
+  return getBatterySpec().current * 2.6;
+}
+
+function getPhaseAmpRatio() {
+  return state.requestedAmps / Math.max(1, getPhaseCurrentLimit());
+}
+
+function calculateDutyCycle(estimate = calculateEstimate()) {
+  const speedMph = Math.abs(state.velocity * 1.45);
+  const loadedTopSpeed = Math.max(1, estimate.freespin * 0.92);
+  const torqueDuty = clamp(state.latestForces.phaseAmps / Math.max(1, getPhaseCurrentLimit()), 0, 1) * 0.08;
+  return clamp(speedMph / loadedTopSpeed + torqueDuty, 0, 1.4);
 }
 
 function calculateFallLimits() {
   const estimate = calculateEstimate();
-  const speedMph = Math.abs(state.velocity * 1.45);
   const sustainedPower = Math.max(1, state.motorPower);
   const watts = Math.max(state.latestForces.watts, state.requestedAmps * estimate.packVoltage);
   const tempLimit = calculateThermalRatio();
   return {
-    amps: getAmpRatio(),
+    amps: getPhaseAmpRatio(),
     power: watts / sustainedPower,
     temp: tempLimit,
-    kv: speedMph / Math.max(1, estimate.freespin * 0.92)
+    duty: calculateDutyCycle(estimate)
   };
 }
 
 function getLimitCrashReason(limits) {
   if (Math.abs(state.balanceTicker) > 1.18) return "Balance lost. Press R to reset.";
-  if (limits.amps >= limits.power && limits.amps >= limits.temp && limits.amps >= limits.kv) return "Over-amp nosedive. Press R to reset.";
-  if (limits.temp >= limits.power && limits.temp >= limits.kv) return "Motor overheated. Press R to reset.";
-  if (limits.power >= limits.kv) return "Power overload. Press R to reset.";
-  return "Kv ceiling nosedive. Press R to reset.";
+  if (limits.amps >= limits.power && limits.amps >= limits.temp && limits.amps >= limits.duty) return "Over-phase-current nosedive. Press R to reset.";
+  if (limits.temp >= limits.power && limits.temp >= limits.duty) return "Motor overheated. Press R to reset.";
+  if (limits.power >= limits.duty) return "Power overload. Press R to reset.";
+  return "Duty ceiling nosedive. Press R to reset.";
 }
 
 function getLimitScrapeReason(limits, type) {
   const scrape = type === "nose" ? "nose scrape" : "tail slide";
   if (Math.abs(state.balanceTicker) > 1.18) return `Balance loss caused a ${scrape}`;
-  if (limits.amps >= limits.power && limits.amps >= limits.temp && limits.amps >= limits.kv) return `Over-amp demand caused a ${scrape}`;
-  if (limits.temp >= limits.power && limits.temp >= limits.kv) return `Motor heat caused a ${scrape}`;
-  if (limits.power >= limits.kv) return `Power overload caused a ${scrape}`;
-  return `Kv ceiling caused a ${scrape}`;
+  if (limits.amps >= limits.power && limits.amps >= limits.temp && limits.amps >= limits.duty) return `Phase current limit caused a ${scrape}`;
+  if (limits.temp >= limits.power && limits.temp >= limits.duty) return `Motor heat caused a ${scrape}`;
+  if (limits.power >= limits.duty) return `Power overload caused a ${scrape}`;
+  return `Duty ceiling caused a ${scrape}`;
 }
 
 function sampleForces(dt, motorTorque, hillDrag, drive, slope, estimate) {
@@ -1168,27 +1213,31 @@ function sampleForces(dt, motorTorque, hillDrag, drive, slope, estimate) {
   const inclineAmps = Math.max(0, Math.sin(slope)) * state.riderWeight * 0.1;
   const regenAmps = Math.min(0, slope) * Math.min(speedMph, 18) * 0.35;
   const requestedOverlay = state.leanMode === "balance" ? state.requestedAmps : 0;
-  const amps = clamp(Math.max(idleAmps + loadAmps + inclineAmps + regenAmps, requestedOverlay), -battery.current * 0.35, battery.current * 1.18);
+  const phaseLimit = getPhaseCurrentLimit();
+  const phaseAmps = clamp(Math.max(loadAmps * 2.2 + inclineAmps * 1.4, requestedOverlay), 0, phaseLimit * 1.22);
+  const batteryEquivalent = phaseAmps * clamp(speedMph / 18, 0.18, 0.9);
+  const amps = clamp(Math.max(idleAmps + loadAmps + inclineAmps + regenAmps, batteryEquivalent), -battery.current * 0.35, battery.current * 1.18);
   const watts = estimate.packVoltage * Math.max(0, amps);
   const whPerMile = speedMph > 0.8 ? watts / speedMph : watts * 0.45;
-  const ampLimit = state.requestedAmps / Math.max(1, battery.current);
+  const ampLimit = phaseAmps / Math.max(1, phaseLimit);
   const powerLoad = watts / Math.max(1, state.motorPower);
   const tempLimit = calculateThermalRatio();
-  const kvLimit = speedMph / Math.max(1, estimate.freespin * 0.92);
+  const dutyLimit = calculateDutyCycle(estimate);
   state.latestForces = {
     motorLoad,
     gripMargin,
     inclineAngle: radiansToDegrees(slope),
     voltage: estimate.packVoltage,
     amps,
+    phaseAmps,
     watts,
     whPerMile,
     ampLimit,
     powerLoad,
     tempLimit,
-    kvLimit
+    dutyLimit
   };
-  state.fallLimits = { amps: ampLimit, power: powerLoad, temp: tempLimit, kv: kvLimit };
+  state.fallLimits = { amps: ampLimit, power: powerLoad, temp: tempLimit, duty: dutyLimit };
 
   if (state.forceSampleTime < 0.08) return;
   state.forceSampleTime = 0;
@@ -1295,6 +1344,10 @@ tireDiameterSlider.addEventListener("input", () => {
   state.tireDiameter = Number(tireDiameterSlider.value);
 });
 
+footpadLengthSlider.addEventListener("input", () => {
+  state.footpadLength = Number(footpadLengthSlider.value);
+});
+
 motorKvSlider.addEventListener("input", () => {
   state.motorKv = Number(motorKvSlider.value);
 });
@@ -1361,7 +1414,7 @@ leanModeInputs.forEach((input) => {
     if (input.checked) {
       state.leanMode = input.value;
       state.overLimitTime = 0;
-      state.fallLimits = { amps: 0, power: 0, temp: calculateThermalRatio(), kv: 0 };
+      state.fallLimits = { amps: 0, power: 0, temp: calculateThermalRatio(), duty: 0 };
       state.balanceTicker = 0;
       state.balanceVelocity = 0;
     }
@@ -1386,6 +1439,8 @@ window.addEventListener("keydown", (event) => {
     pauseButton.textContent = state.paused ? "Resume" : "Pause";
   } else if (event.code === "KeyR") {
     reset();
+  } else if (event.code === "Digit0") {
+    state.cameraZoom = 1;
   } else {
     state.keys.add(event.code);
   }
@@ -1434,6 +1489,12 @@ canvas.addEventListener("pointercancel", () => {
 canvas.addEventListener("pointerleave", () => {
   if (!state.forceGraph.resizeMode) canvas.style.cursor = "default";
 });
+
+canvas.addEventListener("wheel", (event) => {
+  event.preventDefault();
+  const zoomDelta = Math.exp(-event.deltaY * 0.0012);
+  state.cameraZoom = clamp(state.cameraZoom * zoomDelta, 0.55, 2.8);
+}, { passive: false });
 
 window.addEventListener("resize", resizeCanvas);
 
