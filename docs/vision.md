@@ -23,14 +23,14 @@ The first estimator is intentionally conservative and educational, not a safety 
 - Motor temperature from sustained watt draw, temporary overload, stator thermal mass, start temperature, thermal limit, and cooling back toward ambient/start temperature.
 - Nose scrape and tail slide recovery from board angle, footpad contact, recovery lean, and a countdown window.
 
-## Phase 0: Prototype Foundation
+## Phase 0 [x]: Prototype Foundation
 
 - [x] Keep the side-scroller world as the primary experience.
 - [x] Maintain the right-side collapsible control panel for fast access to settings.
 - [x] Preserve estimate panels, live graph, Balance mode, scrape recovery, and board/rider visualization.
 - [x] Keep all current calculations labeled as approximate until validated.
 
-## Phase 1: Clear Approximation And UX
+## Phase 1 [x]: Clear Approximation And UX
 
 - [x] Rename limit concepts to realistic terms: torque current limit, temporary power overload, motor thermal limit, and voltage duty limit.
 - [x] Keep the existing simple model visible and label every estimate as approximate.
@@ -39,7 +39,7 @@ The first estimator is intentionally conservative and educational, not a safety 
 - [x] Add a recovery quality meter that tells the rider whether their lean is helping or making the scrape worse.
 - [x] Add slow motion during the first moment of a scrape so users can react and learn.
 
-## Phase 2: Electrical Model
+## Phase 2 [~]: Electrical Model
 
 - [x] Split battery current and phase current instead of using one amp value.
 - [ ] Split motor current from phase current if needed for deeper motor modeling.
@@ -50,7 +50,7 @@ The first estimator is intentionally conservative and educational, not a safety 
 - [x] Keep freespin speed as a derived reference, not the main failure metric.
 - [ ] Add separate graph traces for voltage sag and field weakening.
 
-## Phase 3: Motor And Thermal Model
+## Phase 3 [~]: Motor And Thermal Model
 
 - [ ] Add motor resistance, Kv/Kt relationship, copper losses, and efficiency.
 - [x] Model stator size as thermal mass and cooling surface area.
@@ -61,7 +61,7 @@ The first estimator is intentionally conservative and educational, not a safety 
 - [ ] Add thermal rollback before crash: gradually reduce available torque/power as temperatures climb.
 - [x] Let airflow/cooling change with speed.
 
-## Phase 4: Tire, Terrain, And Rider Physics
+## Phase 4 [~]: Tire, Terrain, And Rider Physics
 
 - [x] Model tire radius from tire diameter.
 - [ ] Model tire pressure, contact patch, rolling resistance, and grip coefficient.
@@ -74,7 +74,7 @@ The first estimator is intentionally conservative and educational, not a safety 
 - [x] Model footpad contact during nose scrapes and tail slides as actual geometry.
 - [ ] Add surface presets such as asphalt, gravel, wet pavement, grass, and loose dirt.
 
-## Phase 5: Board Behavior
+## Phase 5 [~]: Board Behavior
 
 - [ ] Add pushback behavior, tiltback, haptic buzz, alerts, and controller response modes.
 - [x] Simulate nosedive causes separately enough to distinguish current, duty, power, thermal, and balance failures.
@@ -84,14 +84,14 @@ The first estimator is intentionally conservative and educational, not a safety 
 - [ ] Add custom preset saving and comparison.
 - [ ] Add ride modes that change response curves, not only labels.
 
-## Phase 6: Training And Playback
+## Phase 6 [ ]: Training And Playback
 
 - [ ] Let users replay a hill climb, acceleration run, braking run, or rough-terrain section.
 - [ ] Add ghost traces so a user can compare two setups on the same scenario.
 - [ ] Add "why did I fall?" summaries after crashes.
 - [ ] Add timeline scrubbing for voltage, current, duty, temperature, speed, lean, and scrape state.
 
-## Phase 7: Validation
+## Phase 7 [ ]: Validation
 
 - [ ] Import or enter real ride logs from VESC or similar controllers.
 - [ ] Compare simulated voltage, current, duty cycle, speed, and temperature against real data.

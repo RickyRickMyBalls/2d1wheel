@@ -32,6 +32,12 @@
             <strong id="freespinReadout">0.0 mph</strong>
           </div>
         </div>
+        <div class="viewport-lean-control" aria-label="Rider lean control">
+          <label class="control">
+            <span>Rider lean</span>
+            <input id="leanSlider" type="range" min="-45" max="45" step="1" value="0">
+          </label>
+        </div>
       </section>
 
       <aside class="control-panel" aria-label="Simulator controls">
@@ -84,8 +90,8 @@
               <li>Torque current, power load, thermal load, and duty cycle are simplified rails.</li>
               <li>Battery current and phase current are now separated with approximate conversion.</li>
               <li>Duty cycle approximates voltage headroom from speed, tire size, Kv, and pack voltage.</li>
-              <li>Motor temperature uses sustained watts, stator size, and cooling approximation.</li>
-              <li>Scrape recovery uses footpad contact geometry and rider lean direction.</li>
+              <li>Motor temperature uses estimated copper/iron/overload losses, stator thermal mass, and speed-based cooling.</li>
+              <li>Nose scrape and tail slide only start after footpad contact geometry reaches the ground.</li>
             </ul>
           </section>
         </details>
@@ -114,8 +120,27 @@
           </label>
 
           <label class="control">
+            <span>Tire PSI <b id="tirePsiValue">18 psi</b></span>
+            <input id="tirePsiSlider" type="range" min="6" max="35" step="1" value="18">
+          </label>
+
+          <label class="control">
+            <span>Tire compound</span>
+            <select id="tireCompoundSelect">
+              <option value="soft">Soft grip</option>
+              <option value="medium" selected>Medium</option>
+              <option value="hard">Hard range</option>
+            </select>
+          </label>
+
+          <label class="control">
             <span>Footpad length <b id="footpadLengthValue">48 px</b></span>
             <input id="footpadLengthSlider" type="range" min="36" max="120" step="2" value="48">
+          </label>
+
+          <label class="control">
+            <span>Board height <b id="boardHeightValue">9 px drop</b></span>
+            <input id="boardHeightSlider" type="range" min="-8" max="24" step="1" value="9">
           </label>
 
           <label class="control">
@@ -169,8 +194,33 @@
           </label>
 
           <label class="control">
+            <span>Battery parallel <b id="batteryParallelValue">2p</b></span>
+            <input id="batteryParallelSlider" type="range" min="1" max="8" step="1" value="2">
+          </label>
+
+          <label class="control">
             <span>Pack current <b id="packCurrentValue">40 A</b></span>
             <input id="packCurrentSlider" type="range" min="20" max="110" step="1" value="40">
+          </label>
+
+          <label class="control">
+            <span>Controller phase amps <b id="phaseCurrentValue">104 A</b></span>
+            <input id="phaseCurrentSlider" type="range" min="40" max="320" step="2" value="104">
+          </label>
+
+          <label class="control">
+            <span>Controller duty limit <b id="controllerDutyValue">95%</b></span>
+            <input id="controllerDutySlider" type="range" min="70" max="110" step="1" value="95">
+          </label>
+
+          <label class="control">
+            <span>Field weakening <b id="fieldWeakeningValue">0%</b></span>
+            <input id="fieldWeakeningSlider" type="range" min="0" max="30" step="1" value="0">
+          </label>
+
+          <label class="control">
+            <span>Cutoff voltage <b id="cutoffVoltageValue">3.0 V/cell</b></span>
+            <input id="cutoffVoltageSlider" type="range" min="2.7" max="3.4" step="0.05" value="3.0">
           </label>
 
           <label class="control">
@@ -209,8 +259,13 @@
           <summary>Rider And Controls</summary>
           <div class="section-stack">
             <label class="control">
-              <span>Rider lean</span>
-              <input id="leanSlider" type="range" min="-45" max="45" step="1" value="0">
+              <span>Knee bend <b id="kneeBendValue">15%</b></span>
+              <input id="kneeBendSlider" type="range" min="0" max="100" step="1" value="15">
+            </label>
+
+            <label class="control">
+              <span>Stance width <b id="stanceWidthValue">46 px</b></span>
+              <input id="stanceWidthSlider" type="range" min="34" max="76" step="1" value="46">
             </label>
 
             <fieldset>
@@ -265,6 +320,17 @@
             <label class="control">
               <span>Terrain roughness</span>
               <input id="terrainSlider" type="range" min="0" max="100" step="1" value="34">
+            </label>
+
+            <label class="control">
+              <span>Surface preset</span>
+              <select id="surfaceSelect">
+                <option value="asphalt" selected>Asphalt</option>
+                <option value="wet">Wet pavement</option>
+                <option value="gravel">Gravel</option>
+                <option value="grass">Grass</option>
+                <option value="loose">Loose dirt</option>
+              </select>
             </label>
 
             <fieldset>

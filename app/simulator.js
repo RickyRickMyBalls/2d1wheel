@@ -34,33 +34,53 @@ const tireSelect = document.querySelector("#tireSelect");
 const motorSelect = document.querySelector("#motorSelect");
 const batterySelect = document.querySelector("#batterySelect");
 const tireDiameterSlider = document.querySelector("#tireDiameterSlider");
+const tirePsiSlider = document.querySelector("#tirePsiSlider");
+const tireCompoundSelect = document.querySelector("#tireCompoundSelect");
 const footpadLengthSlider = document.querySelector("#footpadLengthSlider");
+const boardHeightSlider = document.querySelector("#boardHeightSlider");
 const motorKvSlider = document.querySelector("#motorKvSlider");
 const motorPowerSlider = document.querySelector("#motorPowerSlider");
 const statorSizeSlider = document.querySelector("#statorSizeSlider");
 const motorStartTempSlider = document.querySelector("#motorStartTempSlider");
 const motorTempLimitSlider = document.querySelector("#motorTempLimitSlider");
 const batterySeriesSlider = document.querySelector("#batterySeriesSlider");
+const batteryParallelSlider = document.querySelector("#batteryParallelSlider");
 const packCurrentSlider = document.querySelector("#packCurrentSlider");
+const phaseCurrentSlider = document.querySelector("#phaseCurrentSlider");
+const controllerDutySlider = document.querySelector("#controllerDutySlider");
+const fieldWeakeningSlider = document.querySelector("#fieldWeakeningSlider");
+const cutoffVoltageSlider = document.querySelector("#cutoffVoltageSlider");
 const batteryPercentSlider = document.querySelector("#batteryPercentSlider");
 const batteryDrainToggle = document.querySelector("#batteryDrainToggle");
 const drainRateSlider = document.querySelector("#drainRateSlider");
 const riderWeightSlider = document.querySelector("#riderWeightSlider");
 const riderHeightSlider = document.querySelector("#riderHeightSlider");
+const kneeBendSlider = document.querySelector("#kneeBendSlider");
+const stanceWidthSlider = document.querySelector("#stanceWidthSlider");
 const inclineAngleSlider = document.querySelector("#inclineAngleSlider");
+const surfaceSelect = document.querySelector("#surfaceSelect");
 const tireDiameterValue = document.querySelector("#tireDiameterValue");
+const tirePsiValue = document.querySelector("#tirePsiValue");
 const footpadLengthValue = document.querySelector("#footpadLengthValue");
+const boardHeightValue = document.querySelector("#boardHeightValue");
 const motorKvValue = document.querySelector("#motorKvValue");
 const motorPowerValue = document.querySelector("#motorPowerValue");
 const statorSizeValue = document.querySelector("#statorSizeValue");
 const motorStartTempValue = document.querySelector("#motorStartTempValue");
 const motorTempLimitValue = document.querySelector("#motorTempLimitValue");
 const batterySeriesValue = document.querySelector("#batterySeriesValue");
+const batteryParallelValue = document.querySelector("#batteryParallelValue");
 const packCurrentValue = document.querySelector("#packCurrentValue");
+const phaseCurrentValue = document.querySelector("#phaseCurrentValue");
+const controllerDutyValue = document.querySelector("#controllerDutyValue");
+const fieldWeakeningValue = document.querySelector("#fieldWeakeningValue");
+const cutoffVoltageValue = document.querySelector("#cutoffVoltageValue");
 const batteryPercentValue = document.querySelector("#batteryPercentValue");
 const drainRateValue = document.querySelector("#drainRateValue");
 const riderWeightValue = document.querySelector("#riderWeightValue");
 const riderHeightValue = document.querySelector("#riderHeightValue");
+const kneeBendValue = document.querySelector("#kneeBendValue");
+const stanceWidthValue = document.querySelector("#stanceWidthValue");
 const inclineAngleValue = document.querySelector("#inclineAngleValue");
 const restartButton = document.querySelector("#restartButton");
 const pauseButton = document.querySelector("#pauseButton");
@@ -84,20 +104,33 @@ const state = {
   inclineAngle: 0,
   cameraZoom: 1,
   tireDiameter: 11.5,
+  tirePsi: 18,
+  tireCompound: "medium",
   footpadLength: 48,
+  boardHeight: 9,
   motorKv: 15.2,
   motorPower: 750,
   statorSize: 100,
   motorStartTemp: 30,
   motorTempLimit: 95,
   motorTemp: 30,
+  controllerTemp: 30,
+  batteryTemp: 28,
   batterySeries: 18,
+  batteryParallel: 2,
   packCurrent: 40,
+  phaseCurrentLimit: 104,
+  controllerDutyLimit: 95,
+  fieldWeakening: 0,
+  cutoffVoltage: 3,
   tireKey: "gt-treaded",
   motorKey: "stock-750",
   batteryKey: "18s2p",
+  surfaceKey: "asphalt",
   mode: "Mission",
   leanMode: "default",
+  kneeBend: 15,
+  stanceWidth: 46,
   balanceTicker: 0,
   balanceVelocity: 0,
   requestedAmps: 0,
@@ -128,12 +161,19 @@ const state = {
     voltage: 0,
     amps: 0,
     phaseAmps: 0,
+    deliveredPhaseAmps: 0,
     watts: 0,
     whPerMile: 0,
+    voltageSag: 0,
+    tractionSlip: 0,
+    motorHeatWatts: 0,
+    motorThermalCapacity: 0,
     ampLimit: 0,
     powerLoad: 0,
     tempLimit: 0,
-    dutyLimit: 0
+    dutyLimit: 0,
+    controllerTempLimit: 0,
+    batteryTempLimit: 0
   },
   forceGraph: {
     x: 0,
@@ -161,24 +201,46 @@ const modes = {
 const maxLeanDegrees = 45;
 
 const tires = {
-  "pint-slick": { name: "10.5 in slick", diameter: 10.5, grip: 0.95, rolling: 0.98 },
-  "gt-treaded": { name: "11.5 in treaded", diameter: 11.5, grip: 1.08, rolling: 0.94 },
-  growler: { name: "10.5 in growler", diameter: 10.5, grip: 1.03, rolling: 0.96 },
-  trail: { name: "12.0 in trail", diameter: 12, grip: 1.12, rolling: 0.92 }
+  "pint-slick": { name: "10.5 in slick", diameter: 10.5, width: 6, grip: 0.95, rolling: 0.98, tread: "slick" },
+  "gt-treaded": { name: "11.5 in treaded", diameter: 11.5, width: 6.5, grip: 1.08, rolling: 0.94, tread: "treaded" },
+  growler: { name: "10.5 in growler", diameter: 10.5, width: 6.5, grip: 1.03, rolling: 0.96, tread: "slick" },
+  trail: { name: "12.0 in trail", diameter: 12, width: 7, grip: 1.12, rolling: 0.92, tread: "treaded" }
 };
 
 const motors = {
-  "stock-750": { name: "750 W hub", kv: 15.2, watts: 750, torque: 1 },
-  "torque-850": { name: "850 W torque hub", kv: 14.4, watts: 850, torque: 1.16 },
-  "highspeed-900": { name: "900 W speed hub", kv: 16.8, watts: 900, torque: 0.98 },
-  "vesc-1200": { name: "1200 W VESC hub", kv: 15.9, watts: 1200, torque: 1.34 }
+  "stock-750": { name: "750 W hub", kv: 15.2, watts: 750, torque: 1, resistance: 0.18 },
+  "torque-850": { name: "850 W torque hub", kv: 14.4, watts: 850, torque: 1.16, resistance: 0.16 },
+  "highspeed-900": { name: "900 W speed hub", kv: 16.8, watts: 900, torque: 0.98, resistance: 0.17 },
+  "vesc-1200": { name: "1200 W VESC hub", kv: 15.9, watts: 1200, torque: 1.34, resistance: 0.14 }
 };
 
 const batteries = {
-  "15s2p": { name: "15s2p 63 V pack", cells: 15, parallel: 2, sag: 0.16, current: 34 },
-  "18s2p": { name: "18s2p 75.6 V pack", cells: 18, parallel: 2, sag: 0.14, current: 40 },
-  "20s2p": { name: "20s2p 84 V pack", cells: 20, parallel: 2, sag: 0.13, current: 45 },
-  "20s3p": { name: "20s3p 84 V high current", cells: 20, parallel: 3, sag: 0.09, current: 66 }
+  "15s2p": { name: "15s2p 63 V pack", cells: 15, parallel: 2, sag: 0.16, current: 34, cellAh: 5, cellResistance: 0.018 },
+  "18s2p": { name: "18s2p 75.6 V pack", cells: 18, parallel: 2, sag: 0.14, current: 40, cellAh: 5, cellResistance: 0.017 },
+  "20s2p": { name: "20s2p 84 V pack", cells: 20, parallel: 2, sag: 0.13, current: 45, cellAh: 5, cellResistance: 0.016 },
+  "20s3p": { name: "20s3p 84 V high current", cells: 20, parallel: 3, sag: 0.09, current: 66, cellAh: 5, cellResistance: 0.014 }
+};
+
+const tireCompounds = {
+  soft: { grip: 1.1, rolling: 0.94, heat: 1.05 },
+  medium: { grip: 1, rolling: 1, heat: 1 },
+  hard: { grip: 0.9, rolling: 1.06, heat: 0.96 }
+};
+
+const surfaces = {
+  asphalt: { name: "Asphalt", grip: 1, rolling: 1, bump: 1 },
+  wet: { name: "Wet pavement", grip: 0.68, rolling: 1.02, bump: 1 },
+  gravel: { name: "Gravel", grip: 0.58, rolling: 0.88, bump: 1.3 },
+  grass: { name: "Grass", grip: 0.52, rolling: 0.78, bump: 1.45 },
+  loose: { name: "Loose dirt", grip: 0.48, rolling: 0.82, bump: 1.6 }
+};
+
+const validationScenarios = {
+  flatAcceleration: { inclineAngle: 0, surfaceKey: "asphalt", target: "speed/current ramp" },
+  sustainedClimb: { inclineAngle: 12, surfaceKey: "asphalt", target: "thermal rollback" },
+  lowBatteryPush: { batteryPercent: 20, surfaceKey: "asphalt", target: "voltage sag and duty" },
+  highSpeedDuty: { inclineAngle: 0, fieldWeakening: 0, target: "duty ceiling" },
+  looseSurface: { inclineAngle: 6, surfaceKey: "loose", target: "traction slip" }
 };
 
 function resizeCanvas() {
@@ -202,6 +264,8 @@ function reset() {
   state.overLimitTime = 0;
   state.fallLimits = { amps: 0, power: 0, temp: 0, duty: 0 };
   state.motorTemp = state.motorStartTemp;
+  state.controllerTemp = 30;
+  state.batteryTemp = 28;
   state.paused = false;
   state.crashed = false;
   state.scrapeState = "none";
@@ -256,7 +320,8 @@ function update(dt) {
   const estimate = calculateEstimate();
   const ampLimit = getPhaseCurrentLimit();
   const ampStress = state.leanMode === "balance" ? clamp(1 - Math.max(0, state.requestedAmps - ampLimit) / ampLimit, 0.22, 1) : 1;
-  const reserveAssist = clamp(estimate.reserve / 70, 0.45, 1.18) * ampStress;
+  const thermalAssist = clamp(1 - Math.max(0, Math.max(state.fallLimits.temp, state.latestForces.controllerTempLimit, state.latestForces.batteryTempLimit) - 0.82) * 1.3, 0.35, 1);
+  const reserveAssist = clamp(estimate.reserve / 70, 0.45, 1.18) * ampStress * thermalAssist;
   const targetAngle = slope * 0.35 + leanRadians * 0.7;
   const correction = targetAngle - state.boardAngle;
   const motorTorque = correction * state.motorResponse * mode.torque * reserveAssist * 12;
@@ -279,15 +344,16 @@ function update(dt) {
   const weightDrag = clamp((state.riderWeight - 170) / 110, -0.3, 1.2);
   const hillDrag = slope * (48 + weightDrag * 16);
   sampleForces(dt, motorTorque, hillDrag, drive, slope, estimate);
-  updateMotorTemperature(dt);
+  updateThermalModel(dt);
   drainBattery(dt);
   state.velocity += (drive - hillDrag) * dt;
   state.velocity *= Math.pow(state.scrapeState === "scrape" ? 0.42 : 0.82, dt);
   state.velocity = clamp(state.velocity, -estimate.safeSpeed / 1.45, estimate.safeSpeed / 1.45);
   state.x += state.velocity * 32 * dt;
 
-  if (Math.abs(radiansToDegrees(state.boardAngle)) > 46) {
-    startScrape(state.boardAngle > 0 ? "nose" : "tail", state.boardAngle > 0 ? "Nose scrape" : "Tail slide");
+  const contact = getActiveScrapeContact();
+  if (contact.touching) {
+    startScrape(contact.type, contact.type === "nose" ? "Nose footpad touched down" : "Tail footpad touched down");
   }
 }
 
@@ -376,6 +442,7 @@ function drawBoard(x, groundY, angle) {
   const wheelRadius = getWheelRadius();
   const { railHalf, padLength, railY, padY } = getBoardGeometry(wheelRadius);
   const wheelY = groundY - wheelRadius;
+  const model = getSimulationModel();
 
   ctx.save();
   ctx.translate(x, wheelY);
@@ -419,7 +486,35 @@ function drawBoard(x, groundY, angle) {
   roundedRect(railHalf - padLength + 18, padY - 16, Math.max(24, padLength - 22), 8, 4, "#e7b84f");
 
   const scrapeRiderLean = state.scrapeState === "scrape" ? (state.scrapeType === "nose" ? 0.28 : -0.28) : 0;
-  drawRider(0, padY - 12, degreesToRadians(state.riderLean) + scrapeRiderLean, 76);
+  drawRider(railHalf, padLength, padY, degreesToRadians(state.riderLean) + scrapeRiderLean);
+  drawCenterOfMass(model.com);
+  ctx.restore();
+}
+
+function drawCenterOfMass(com) {
+  drawComMarker(com.board.x, com.board.y, "#74a7ff", "B");
+  drawComMarker(com.rider.x, com.rider.y, "#e7b84f", "R");
+  drawComMarker(com.combined.x, com.combined.y, "#ef6b5b", "C");
+  ctx.save();
+  ctx.strokeStyle = "rgba(239, 107, 91, 0.52)";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(com.combined.x, com.combined.y);
+  ctx.lineTo(0, getWheelRadius());
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawComMarker(x, y, color, label) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.font = "700 9px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(label, x, y - 8);
   ctx.restore();
 }
 
@@ -428,12 +523,13 @@ function getWheelRadius() {
 }
 
 function getBoardGeometry(wheelRadius) {
-  const visualCenterOffset = 7;
+  const visualCenterOffset = state.boardHeight - 2;
+  const railHalf = 84 + state.footpadLength;
   return {
-    railHalf: 132,
+    railHalf,
     padLength: state.footpadLength,
     railY: visualCenterOffset,
-    padY: visualCenterOffset + 2
+    padY: state.boardHeight
   };
 }
 
@@ -462,6 +558,37 @@ function getScrapeContactAngle(wheelRadius, type) {
   }
 
   return high * side;
+}
+
+function getScrapeContactState(type, angle = state.boardAngle, wheelRadius = getWheelRadius()) {
+  const point = getScrapeContactLocalPoint(wheelRadius, type);
+  const contactY = point.x * Math.sin(angle) + point.y * Math.cos(angle);
+  const clearance = wheelRadius - contactY;
+  return {
+    type,
+    clearance,
+    touching: clearance <= 0,
+    contactAngle: getScrapeContactAngle(wheelRadius, type)
+  };
+}
+
+function getActiveScrapeContact() {
+  const nose = getScrapeContactState("nose");
+  const tail = getScrapeContactState("tail");
+  if (nose.touching && tail.touching) return nose.clearance <= tail.clearance ? nose : tail;
+  if (nose.touching) return nose;
+  if (tail.touching) return tail;
+  return state.boardAngle >= 0 ? nose : tail;
+}
+
+function tryStartGeometryScrape(type, reason) {
+  const contact = getScrapeContactState(type);
+  if (contact.touching) {
+    startScrape(type, reason);
+    return true;
+  }
+  state.scrapeCause = `${reason}; ${Math.ceil(contact.clearance)} px clearance remains`;
+  return false;
 }
 
 function drawOnewheelRails(railHalf, railY) {
@@ -495,43 +622,91 @@ function wheelBendX() {
   return 78;
 }
 
-function drawRider(x, y, lean, stance = 46) {
-  const scale = clamp(state.riderHeight / 64, 0.75, 1.38);
-  const hipY = -72 * scale;
-  const torsoTopY = -132 * scale;
-  const shoulderY = -106 * scale;
-  const headY = -154 * scale;
+function drawRider(railHalf, padLength, padY, lean) {
+  const scale = getRiderScale();
+  const crouch = state.kneeBend / 100;
+  const stance = state.stanceWidth * scale;
+  const leanAmount = clamp(lean / degreesToRadians(maxLeanDegrees), -1.15, 1.15);
+  const leftFoot = {
+    x: -railHalf - 10 + padLength * 0.6,
+    y: padY - 17
+  };
+  const rightFoot = {
+    x: railHalf - padLength * 0.6 + 10,
+    y: padY - 17
+  };
+  const hip = {
+    x: leanAmount * 34 * scale,
+    y: padY - (72 - crouch * 22) * scale
+  };
+  const leftKnee = {
+    x: lerp(leftFoot.x, hip.x - stance * 0.16, 0.56) - 7 * scale - crouch * 10,
+    y: lerp(leftFoot.y, hip.y, 0.52) - (18 - crouch * 8) * scale
+  };
+  const rightKnee = {
+    x: lerp(rightFoot.x, hip.x + stance * 0.16, 0.56) + 7 * scale + crouch * 10,
+    y: lerp(rightFoot.y, hip.y, 0.52) - (18 - crouch * 8) * scale
+  };
+  const shoulder = {
+    x: hip.x + leanAmount * 48 * scale,
+    y: hip.y - (66 - crouch * 14) * scale
+  };
+  const head = {
+    x: shoulder.x + leanAmount * 18 * scale,
+    y: shoulder.y - (40 - crouch * 5) * scale
+  };
   const headRadius = 18 * scale;
+  const shoulderSpan = 44 * scale;
+  const shoulderAngle = lean * 0.34;
+  const armLift = 18 * scale;
+  const leftShoulder = {
+    x: shoulder.x - Math.cos(shoulderAngle) * shoulderSpan,
+    y: shoulder.y - Math.sin(shoulderAngle) * shoulderSpan
+  };
+  const rightShoulder = {
+    x: shoulder.x + Math.cos(shoulderAngle) * shoulderSpan,
+    y: shoulder.y + Math.sin(shoulderAngle) * shoulderSpan
+  };
 
   ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(lean * 0.8);
   ctx.strokeStyle = "#f3f0e8";
   ctx.lineWidth = Math.max(5, 7 * scale);
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
   ctx.beginPath();
-  ctx.moveTo(-stance - 22, 0);
-  ctx.lineTo(-stance + 20, -4);
-  ctx.moveTo(stance + 22, 0);
-  ctx.lineTo(stance - 20, -4);
-  ctx.moveTo(-stance + 20, -4);
-  ctx.lineTo(-8 * scale, hipY);
-  ctx.moveTo(stance - 20, -4);
-  ctx.lineTo(8 * scale, hipY);
-  ctx.moveTo(0, hipY);
-  ctx.lineTo(0, torsoTopY);
-  ctx.moveTo(0, shoulderY);
-  ctx.lineTo(-42 * scale, -88 * scale);
-  ctx.moveTo(0, shoulderY);
-  ctx.lineTo(42 * scale, -90 * scale);
+  ctx.moveTo(leftFoot.x - 20 * scale, leftFoot.y);
+  ctx.lineTo(leftFoot.x + 18 * scale, leftFoot.y);
+  ctx.moveTo(rightFoot.x - 18 * scale, rightFoot.y);
+  ctx.lineTo(rightFoot.x + 20 * scale, rightFoot.y);
+  ctx.moveTo(leftFoot.x, leftFoot.y);
+  ctx.lineTo(leftKnee.x, leftKnee.y);
+  ctx.lineTo(hip.x - 8 * scale, hip.y);
+  ctx.moveTo(rightFoot.x, rightFoot.y);
+  ctx.lineTo(rightKnee.x, rightKnee.y);
+  ctx.lineTo(hip.x + 8 * scale, hip.y);
+  ctx.moveTo(hip.x, hip.y);
+  ctx.lineTo(shoulder.x, shoulder.y);
+  ctx.moveTo(leftShoulder.x, leftShoulder.y);
+  ctx.lineTo(rightShoulder.x, rightShoulder.y);
+  ctx.moveTo(leftShoulder.x, leftShoulder.y);
+  ctx.lineTo(leftShoulder.x - 28 * scale, leftShoulder.y + armLift);
+  ctx.moveTo(rightShoulder.x, rightShoulder.y);
+  ctx.lineTo(rightShoulder.x + 28 * scale, rightShoulder.y + armLift);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.arc(0, headY, headRadius, 0, Math.PI * 2);
+  ctx.arc(head.x, head.y, headRadius, 0, Math.PI * 2);
   ctx.fillStyle = "#e7b84f";
   ctx.fill();
   ctx.restore();
+}
+
+function getRiderScale() {
+  const tirePixelsPerInch = (getWheelRadius() * 2) / Math.max(1, state.tireDiameter);
+  const targetStandingPixels = state.riderHeight * tirePixelsPerInch * 0.48;
+  const baseStickHeight = 164;
+  return clamp(targetStandingPixels / baseStickHeight, 0.9, 1.85);
 }
 
 function drawScrapeSparks(x, groundY, angle) {
@@ -756,9 +931,11 @@ function drawForceGraph(width, height) {
   drawGraphLine(history, "gripMargin", x, y, graphWidth, graphHeight, "#5fb8a5", 100);
   drawGraphLine(history, "inclineAngle", x, y, graphWidth, graphHeight, "#f3f0e8", 20);
   drawGraphLine(history, "voltage", x, y, graphWidth, graphHeight, "#74a7ff", getVoltageScale());
+  drawGraphLine(history, "voltageSag", x, y, graphWidth, graphHeight, "#4dc7ff", 18);
   drawGraphLine(history, "amps", x, y, graphWidth, graphHeight, "#ef6b5b", Math.max(30, state.packCurrent));
   drawGraphLine(history, "watts", x, y, graphWidth, graphHeight, "#b891ff", Math.max(900, state.motorPower * 1.25));
   drawGraphLine(history, "whPerMile", x, y, graphWidth, graphHeight, "#ff9d66", 80);
+  drawGraphLine(history, "tractionSlip", x, y, graphWidth, graphHeight, "#ffdf70", 1);
   drawGraphLine(history, "ampLimit", x, y, graphWidth, graphHeight, "#ef6b5b", 1);
   drawGraphLine(history, "powerLoad", x, y, graphWidth, graphHeight, "#b891ff", 1);
   drawGraphLine(history, "tempLimit", x, y, graphWidth, graphHeight, "#ff9d66", 1);
@@ -782,9 +959,9 @@ function drawForceGraph(width, height) {
   ctx.fillStyle = "#b891ff";
   ctx.fillText(`${Math.round(state.latestForces.watts)} W`, x + 138, y + graphHeight - 12);
   ctx.fillStyle = "#ff9d66";
-  ctx.fillText(`${Math.round(state.motorTemp)} C`, x + 214, y + graphHeight - 12);
+  ctx.fillText(`M${Math.round(state.motorTemp)} C${Math.round(state.controllerTemp)} B${Math.round(state.batteryTemp)}`, x + 214, y + graphHeight - 12);
   ctx.fillStyle = "#ff9d66";
-  ctx.fillText(`${Math.round(state.latestForces.whPerMile)} Wh/mi`, x + 268, y + graphHeight - 12);
+  ctx.fillText(`${Math.round(state.latestForces.whPerMile)} Wh/mi`, x + 324, y + graphHeight - 12);
 }
 
 function drawResizeFrame(x, y, width, height) {
@@ -977,86 +1154,241 @@ function updateHud() {
   powerLoadLabel.textContent = `${Math.round(state.fallLimits.power * 100)}% of sustained rating`;
   motorTempPanel.textContent = `${Math.round(state.motorTemp)} C`;
   motorTempMeter.value = Math.min(100, state.fallLimits.temp * 100);
-  motorTempLabel.textContent = `${Math.round(state.fallLimits.temp * 100)}% of temp limit`;
+  motorTempLabel.textContent = `${Math.round(state.fallLimits.temp * 100)}% of temp limit | ${Math.round(state.latestForces.motorHeatWatts)} W heat`;
   dutyLimitPanel.textContent = `${Math.round(state.fallLimits.duty * 100)}%`;
   dutyLimitMeter.value = Math.min(100, state.fallLimits.duty * 100);
   dutyLimitLabel.textContent = `${Math.round(state.fallLimits.duty * 100)}% duty cycle`;
   tireDiameterValue.textContent = `${state.tireDiameter.toFixed(1)} in`;
+  tirePsiValue.textContent = `${Math.round(state.tirePsi)} psi`;
   footpadLengthValue.textContent = `${Math.round(state.footpadLength)} px`;
+  boardHeightValue.textContent = `${Math.round(state.boardHeight)} px drop`;
   motorKvValue.textContent = `${state.motorKv.toFixed(1)} rpm/V`;
   motorPowerValue.textContent = `${Math.round(state.motorPower)} W`;
   statorSizeValue.textContent = `${Math.round(state.statorSize)}%`;
   motorStartTempValue.textContent = `${Math.round(state.motorStartTemp)} C`;
   motorTempLimitValue.textContent = `${Math.round(state.motorTempLimit)} C`;
   batterySeriesValue.textContent = `${state.batterySeries}s`;
+  batteryParallelValue.textContent = `${state.batteryParallel}p`;
   packCurrentValue.textContent = `${state.packCurrent} A`;
+  phaseCurrentValue.textContent = `${state.phaseCurrentLimit} A`;
+  controllerDutyValue.textContent = `${state.controllerDutyLimit}%`;
+  fieldWeakeningValue.textContent = `${state.fieldWeakening}%`;
+  cutoffVoltageValue.textContent = `${state.cutoffVoltage.toFixed(2)} V/cell`;
   batteryPercentValue.textContent = `${state.batteryPercent.toFixed(1)}%`;
   drainRateValue.textContent = `${state.drainRate}x`;
   riderWeightValue.textContent = `${state.riderWeight} lb`;
   riderHeightValue.textContent = `${state.riderHeight} in`;
+  kneeBendValue.textContent = `${state.kneeBend}%`;
+  stanceWidthValue.textContent = `${state.stanceWidth} px`;
   inclineAngleValue.textContent = `${state.inclineAngle.toFixed(1)} deg`;
 }
 
 function calculateEstimate() {
-  const tire = getTireSpec();
-  const motor = getMotorSpec();
-  const battery = getBatterySpec();
-  const soc = state.batteryPercent / 100;
-  const cellVoltage = 3.1 + Math.pow(soc, 0.72) * 1.1;
+  const model = getSimulationModel();
+  const { tire, motor, battery, controller, terrain, rider } = model;
+  const soc = battery.stateOfCharge;
   const load = calculateLoadFactor();
-  const sagVoltage = battery.cells * battery.sag * load * (1.15 - soc * 0.35);
-  const packVoltage = Math.max(battery.cells * 3.05, battery.cells * cellVoltage - sagVoltage);
-  const rpm = motor.kv * packVoltage;
+  const loadAmps = Math.max(0, state.latestForces.amps || battery.current * 0.22);
+  const voltageState = calculateBatteryVoltage(battery, loadAmps, load);
+  const fieldWeakeningRatio = controller.fieldWeakening / 100;
+  const packVoltage = voltageState.loadedVoltage;
+  const rpm = motor.kv * packVoltage * (1 + fieldWeakeningRatio * 0.12);
   const circumference = Math.PI * tire.diameter;
   const freespin = rpm * circumference / 1056;
-  const weightPenalty = clamp((state.riderWeight - 170) / 170, -0.18, 0.65);
-  const climbPenalty = clamp(Math.tan(degreesToRadians(state.inclineAngle)) / 0.32, -0.16, 1.1);
-  const batteryPenalty = clamp((45 - state.batteryPercent) / 80, 0, 0.42);
-  const roughPenalty = state.terrainRoughness * 0.08;
+  const weightPenalty = clamp((rider.weight - 170) / 170, -0.18, 0.65);
+  const climbPenalty = clamp(Math.tan(degreesToRadians(terrain.inclineAngle)) / 0.32, -0.16, 1.1);
+  const batteryPenalty = clamp((45 - battery.percent) / 80, 0, 0.42);
+  const sagPenalty = clamp(voltageState.sagVoltage / Math.max(1, voltageState.openVoltage) * 2, 0, 0.36);
+  const roughPenalty = terrain.roughness * 0.08 + (1 - terrain.rolling) * 0.06;
   const motorReserve = (motor.watts * motor.torque + battery.current * packVoltage * 0.34) / 1350;
-  const reserve = clamp((motorReserve * tire.grip - weightPenalty * 0.55 - climbPenalty * 0.72 - batteryPenalty) * 58, 8, 100);
+  const reserve = clamp((motorReserve * tire.grip * terrain.grip - weightPenalty * 0.55 - climbPenalty * 0.72 - batteryPenalty - sagPenalty) * 58, 8, 100);
   const safeRatio = clamp(0.7 - weightPenalty * 0.08 - climbPenalty * 0.16 - batteryPenalty * 0.18 + motorReserve * 0.03, 0.42, 0.78);
-  const safeSpeed = clamp(freespin * safeRatio * tire.rolling - roughPenalty * 8, 4, freespin * 0.82);
+  const safeSpeed = clamp(freespin * safeRatio * tire.rolling * terrain.rolling - roughPenalty * 8, 4, freespin * 0.82);
 
   return {
     freespin,
     safeSpeed,
     reserve,
     packVoltage,
-    load
+    load,
+    voltageSag: voltageState.sagVoltage,
+    cutoff: voltageState.cutoff
   };
 }
 
 function calculateLoadFactor() {
-  const rider = state.riderWeight / 180;
-  const hill = 1 + Math.max(0, Math.tan(degreesToRadians(state.inclineAngle))) / 0.18;
-  const rough = 1 + state.terrainRoughness * 0.18;
+  const model = getSimulationModel();
+  const rider = model.rider.weight / 180;
+  const hill = 1 + Math.max(0, Math.tan(degreesToRadians(model.terrain.inclineAngle))) / 0.18;
+  const rough = 1 + model.terrain.roughness * 0.18 * model.terrain.bump;
   return rider * hill * rough;
+}
+
+function getSimulationModel() {
+  const tire = getTireSpec();
+  const motor = getMotorSpec();
+  const battery = getBatterySpec();
+  const controller = getControllerSpec(battery);
+  const board = getBoardSpec(tire);
+  const rider = getRiderSpec();
+  const terrain = getTerrainSpec();
+  const com = calculateCenterOfMass(board, rider);
+  return {
+    tire,
+    motor,
+    battery,
+    controller,
+    board,
+    rider,
+    terrain,
+    com,
+    confidence: "approximate"
+  };
 }
 
 function getTireSpec() {
   const preset = tires[state.tireKey];
+  const compound = tireCompounds[state.tireCompound];
+  const pressureGrip = clamp(1.08 - (state.tirePsi - 16) * 0.012, 0.76, 1.18);
+  const pressureRolling = clamp(0.86 + state.tirePsi * 0.009, 0.88, 1.12);
   return {
     ...preset,
-    diameter: state.tireDiameter
+    diameter: state.tireDiameter,
+    psi: state.tirePsi,
+    compound: state.tireCompound,
+    grip: preset.grip * compound.grip * pressureGrip,
+    rolling: preset.rolling * compound.rolling * pressureRolling
   };
 }
 
 function getMotorSpec() {
   const preset = motors[state.motorKey];
+  const kv = state.motorKv;
+  const kt = 9.549 / Math.max(1, kv);
+  const statorScale = state.statorSize / 100;
   return {
     ...preset,
-    kv: state.motorKv,
-    watts: state.motorPower
+    kv,
+    kt,
+    watts: state.motorPower,
+    resistance: preset.resistance / Math.max(0.65, statorScale),
+    statorScale,
+    temp: state.motorTemp,
+    tempLimit: state.motorTempLimit
   };
 }
 
 function getBatterySpec() {
   const preset = batteries[state.batteryKey];
+  const series = state.batterySeries;
+  const parallel = state.batteryParallel;
+  const stateOfCharge = clamp(state.batteryPercent / 100, 0, 1);
   return {
     ...preset,
-    cells: state.batterySeries,
-    current: state.packCurrent
+    cells: series,
+    series,
+    parallel,
+    current: state.packCurrent,
+    percent: state.batteryPercent,
+    stateOfCharge,
+    cellVoltage: calculateCellVoltage(stateOfCharge),
+    nominalVoltage: series * 3.6,
+    maxVoltage: series * 4.2,
+    internalResistance: preset.cellResistance * series / Math.max(1, parallel),
+    capacityWh: series * parallel * 3.6 * preset.cellAh,
+    temp: state.batteryTemp
+  };
+}
+
+function getControllerSpec(battery = getBatterySpec()) {
+  return {
+    batteryCurrentLimit: state.packCurrent,
+    phaseCurrentLimit: state.phaseCurrentLimit,
+    dutyLimit: state.controllerDutyLimit / 100,
+    fieldWeakening: state.fieldWeakening,
+    cutoffVoltage: state.cutoffVoltage,
+    packCutoffVoltage: battery.series * state.cutoffVoltage,
+    temp: state.controllerTemp,
+    tempLimit: 90
+  };
+}
+
+function getBoardSpec(tire = getTireSpec()) {
+  const wheelRadius = 38 + (tire.diameter - 10) * 7;
+  const geometry = getBoardGeometry(wheelRadius);
+  return {
+    wheelRadius,
+    footpadLength: state.footpadLength,
+    boardHeight: state.boardHeight,
+    railHalf: geometry.railHalf,
+    railY: geometry.railY,
+    padY: geometry.padY,
+    mass: 31
+  };
+}
+
+function getRiderSpec() {
+  return {
+    weight: state.riderWeight,
+    height: state.riderHeight,
+    kneeBend: state.kneeBend,
+    stanceWidth: state.stanceWidth,
+    lean: state.riderLean,
+    mass: state.riderWeight / 2.205
+  };
+}
+
+function getTerrainSpec() {
+  const surface = surfaces[state.surfaceKey];
+  return {
+    ...surface,
+    key: state.surfaceKey,
+    roughness: state.terrainRoughness,
+    inclineAngle: state.inclineAngle
+  };
+}
+
+function calculateCellVoltage(soc) {
+  return 3.1 + Math.pow(clamp(soc, 0, 1), 0.72) * 1.1;
+}
+
+function calculateBatteryVoltage(battery, loadAmps, loadFactor = 1) {
+  const openVoltage = battery.series * battery.cellVoltage;
+  const resistanceSag = Math.max(0, loadAmps) * battery.internalResistance;
+  const prototypeSag = battery.series * battery.sag * loadFactor * (1.15 - battery.stateOfCharge * 0.35);
+  const sagVoltage = resistanceSag * 0.35 + prototypeSag * 0.65;
+  const loadedVoltage = Math.max(battery.series * state.cutoffVoltage, openVoltage - sagVoltage);
+  return {
+    openVoltage,
+    loadedVoltage,
+    sagVoltage,
+    cutoff: loadedVoltage <= battery.series * state.cutoffVoltage + 0.2
+  };
+}
+
+function calculateCenterOfMass(board = getBoardSpec(), rider = getRiderSpec()) {
+  const leanRadians = degreesToRadians(rider.lean);
+  const crouchDrop = rider.kneeBend * 0.36;
+  const riderHeightPx = rider.height * ((board.wheelRadius * 2) / Math.max(1, state.tireDiameter)) * 0.48;
+  const riderCom = {
+    x: Math.sin(leanRadians) * (riderHeightPx * 0.36),
+    y: -board.wheelRadius - riderHeightPx * 0.52 + crouchDrop
+  };
+  const boardCom = {
+    x: -8,
+    y: board.railY - board.wheelRadius * 0.22
+  };
+  const boardMass = board.mass;
+  const riderMass = rider.mass;
+  const totalMass = boardMass + riderMass;
+  return {
+    board: boardCom,
+    rider: riderCom,
+    combined: {
+      x: (boardCom.x * boardMass + riderCom.x * riderMass) / totalMass,
+      y: (boardCom.y * boardMass + riderCom.y * riderMass) / totalMass
+    },
+    totalMass
   };
 }
 
@@ -1081,8 +1413,10 @@ function updateScrapeRecovery(dt) {
     ? state.boardAngle < getScrapeContactAngle(getWheelRadius(), "nose") * 0.68
     : state.boardAngle > getScrapeContactAngle(getWheelRadius(), "tail") * 0.68;
   const leanHelp = state.scrapeType === "nose" ? clamp((-state.targetLean - 8) / 24, 0, 1) : clamp((state.targetLean - 8) / 24, 0, 1);
+  const com = calculateCenterOfMass();
+  const comHelp = state.scrapeType === "nose" ? clamp((-com.combined.x + 10) / 44, 0, 1) : clamp((com.combined.x + 10) / 44, 0, 1);
   const angleHelp = boardRecovering ? 1 : 0.2;
-  state.recoveryQuality = clamp(leanHelp * 0.72 + angleHelp * 0.28, 0, 1);
+  state.recoveryQuality = clamp(leanHelp * 0.48 + comHelp * 0.32 + angleHelp * 0.2, 0, 1);
 
   if (recoveryLean && boardRecovering && state.scrapeTimer > 0.18) {
     state.scrapeState = "none";
@@ -1145,7 +1479,14 @@ function updateBalanceMode(dt, slope) {
 
   if (state.overLimitTime > 0.75 || Math.abs(state.balanceTicker) > 1.18) {
     const type = state.targetLean >= 0 ? "nose" : "tail";
-    startScrape(type, getLimitScrapeReason(limits, type));
+    const direction = type === "nose" ? 1 : -1;
+    state.angularVelocity += direction * dt * clamp(strongestLimit, 0.4, 1.8) * 0.85;
+    tryStartGeometryScrape(type, getLimitScrapeReason(limits, type));
+  }
+
+  if (Math.max(state.latestForces.controllerTempLimit, state.latestForces.batteryTempLimit) > 1.08) {
+    const type = state.targetLean >= 0 ? "nose" : "tail";
+    tryStartGeometryScrape(type, "Thermal rollback could not hold balance");
   }
 
   return {
@@ -1154,7 +1495,7 @@ function updateBalanceMode(dt, slope) {
 }
 
 function getPhaseCurrentLimit() {
-  return getBatterySpec().current * 2.6;
+  return getControllerSpec().phaseCurrentLimit;
 }
 
 function getPhaseAmpRatio() {
@@ -1162,8 +1503,9 @@ function getPhaseAmpRatio() {
 }
 
 function calculateDutyCycle(estimate = calculateEstimate()) {
+  const controller = getControllerSpec();
   const speedMph = Math.abs(state.velocity * 1.45);
-  const loadedTopSpeed = Math.max(1, estimate.freespin * 0.92);
+  const loadedTopSpeed = Math.max(1, estimate.freespin * controller.dutyLimit);
   const torqueDuty = clamp(state.latestForces.phaseAmps / Math.max(1, getPhaseCurrentLimit()), 0, 1) * 0.08;
   return clamp(speedMph / loadedTopSpeed + torqueDuty, 0, 1.4);
 }
@@ -1172,7 +1514,7 @@ function calculateFallLimits() {
   const estimate = calculateEstimate();
   const sustainedPower = Math.max(1, state.motorPower);
   const watts = Math.max(state.latestForces.watts, state.requestedAmps * estimate.packVoltage);
-  const tempLimit = calculateThermalRatio();
+  const tempLimit = Math.max(calculateThermalRatio(), calculateControllerThermalRatio(), calculateBatteryThermalRatio());
   return {
     amps: getPhaseAmpRatio(),
     power: watts / sustainedPower,
@@ -1200,44 +1542,62 @@ function getLimitScrapeReason(limits, type) {
 
 function sampleForces(dt, motorTorque, hillDrag, drive, slope, estimate) {
   state.forceSampleTime += dt;
+  const model = getSimulationModel();
+  const { battery, controller, terrain, tire } = model;
   const loadFromBalance = Math.abs(motorTorque) * 8;
   const loadFromClimb = Math.max(0, hillDrag) * 1.25;
   const loadFromAcceleration = Math.abs(drive) * 0.9;
   const motorLoad = clamp(loadFromBalance + loadFromClimb + loadFromAcceleration, 0, 100);
   const gripDemand = Math.max(0, motorLoad * 0.55 + Math.abs(slope) * 130);
-  const gripMargin = clamp(estimate.reserve - gripDemand * 0.35, 0, 100);
-  const battery = getBatterySpec();
+  const availableGrip = estimate.reserve * tire.grip * terrain.grip;
+  const gripMargin = clamp(availableGrip - gripDemand * 0.35, 0, 100);
+  const tractionSlip = clamp((gripDemand - availableGrip) / 80, 0, 1.4);
   const speedMph = Math.abs(state.velocity * 1.45);
   const idleAmps = 1.5 + state.motorResponse * 0.8;
   const loadAmps = (motorLoad / 100) * battery.current * 0.92;
   const inclineAmps = Math.max(0, Math.sin(slope)) * state.riderWeight * 0.1;
   const regenAmps = Math.min(0, slope) * Math.min(speedMph, 18) * 0.35;
   const requestedOverlay = state.leanMode === "balance" ? state.requestedAmps : 0;
-  const phaseLimit = getPhaseCurrentLimit();
-  const phaseAmps = clamp(Math.max(loadAmps * 2.2 + inclineAmps * 1.4, requestedOverlay), 0, phaseLimit * 1.22);
-  const batteryEquivalent = phaseAmps * clamp(speedMph / 18, 0.18, 0.9);
+  const phaseLimit = controller.phaseCurrentLimit;
+  const requestedPhaseAmps = Math.max(loadAmps * 2.2 + inclineAmps * 1.4, requestedOverlay);
+  const phaseAmps = clamp(requestedPhaseAmps, 0, phaseLimit * 1.22);
+  const deliveredPhaseAmps = Math.min(phaseAmps, phaseLimit);
+  const batteryEquivalent = deliveredPhaseAmps * clamp(speedMph / 18, 0.18, 0.9);
   const amps = clamp(Math.max(idleAmps + loadAmps + inclineAmps + regenAmps, batteryEquivalent), -battery.current * 0.35, battery.current * 1.18);
-  const watts = estimate.packVoltage * Math.max(0, amps);
+  const voltageState = calculateBatteryVoltage(battery, Math.max(0, amps), calculateLoadFactor());
+  const watts = voltageState.loadedVoltage * Math.max(0, amps);
   const whPerMile = speedMph > 0.8 ? watts / speedMph : watts * 0.45;
   const ampLimit = phaseAmps / Math.max(1, phaseLimit);
   const powerLoad = watts / Math.max(1, state.motorPower);
   const tempLimit = calculateThermalRatio();
   const dutyLimit = calculateDutyCycle(estimate);
+  const controllerTempLimit = calculateControllerThermalRatio();
+  const batteryTempLimit = calculateBatteryThermalRatio();
   state.latestForces = {
     motorLoad,
     gripMargin,
     inclineAngle: radiansToDegrees(slope),
-    voltage: estimate.packVoltage,
+    voltage: voltageState.loadedVoltage,
     amps,
     phaseAmps,
+    deliveredPhaseAmps,
     watts,
     whPerMile,
+    voltageSag: voltageState.sagVoltage,
+    tractionSlip,
     ampLimit,
     powerLoad,
     tempLimit,
-    dutyLimit
+    dutyLimit,
+    controllerTempLimit,
+    batteryTempLimit
   };
   state.fallLimits = { amps: ampLimit, power: powerLoad, temp: tempLimit, duty: dutyLimit };
+
+  if (tractionSlip > 1 && state.scrapeState === "none") {
+    const type = state.targetLean >= 0 ? "nose" : "tail";
+    tryStartGeometryScrape(type, "Traction loss broke balance");
+  }
 
   if (state.forceSampleTime < 0.08) return;
   state.forceSampleTime = 0;
@@ -1245,17 +1605,34 @@ function sampleForces(dt, motorTorque, hillDrag, drive, slope, estimate) {
   if (state.forceHistory.length > 150) state.forceHistory.shift();
 }
 
-function updateMotorTemperature(dt) {
+function updateThermalModel(dt) {
+  const model = getSimulationModel();
+  const motor = model.motor;
+  const controller = model.controller;
   const watts = Math.max(0, state.latestForces.watts);
-  const excessWatts = Math.max(0, watts - state.motorPower);
-  const thermalMass = state.statorSize / 100;
-  const coolingArea = Math.pow(thermalMass, 0.65);
-  const copperHeat = watts * 0.0007 / thermalMass;
-  const overloadHeat = excessWatts * 0.0032 / thermalMass;
-  const speedCooling = (0.018 + Math.min(0.12, Math.abs(state.velocity) * 0.006)) * coolingArea;
-  const cooling = Math.max(0, state.motorTemp - state.motorStartTemp) * speedCooling;
-  state.motorTemp += (copperHeat + overloadHeat - cooling) * dt;
+  const speedMph = Math.abs(state.velocity * 1.45);
+  const statorScale = clamp(state.statorSize / 100, 0.6, 1.8);
+  const phaseAmps = Math.max(0, state.latestForces.deliveredPhaseAmps || state.latestForces.phaseAmps);
+  const overPhaseAmps = Math.max(0, state.latestForces.phaseAmps - controller.phaseCurrentLimit);
+  const overPowerWatts = Math.max(0, watts - motor.watts);
+  const copperLossWatts = Math.pow(phaseAmps, 2) * motor.resistance * 0.055;
+  const ironLossWatts = watts * (0.022 + clamp(speedMph / 32, 0, 1) * 0.018);
+  const overloadLossWatts = overPowerWatts * 0.08 + overPhaseAmps * controller.packCutoffVoltage * 0.018;
+  const heatWatts = copperLossWatts + ironLossWatts + overloadLossWatts;
+  const thermalCapacityJPerC = 2600 * Math.pow(statorScale, 1.18);
+  const coolingWattsPerC = (1.4 + Math.min(5.2, speedMph * 0.12)) * Math.pow(statorScale, 0.72);
+  const coolingWatts = Math.max(0, state.motorTemp - state.motorStartTemp) * coolingWattsPerC;
+  const tempDelta = (heatWatts - coolingWatts) * dt / thermalCapacityJPerC;
+  state.motorTemp += tempDelta;
   state.motorTemp = clamp(state.motorTemp, state.motorStartTemp - 3, state.motorTempLimit + 30);
+  state.latestForces.motorHeatWatts = heatWatts;
+  state.latestForces.motorThermalCapacity = thermalCapacityJPerC;
+  const controllerHeat = Math.max(0, state.latestForces.phaseAmps / Math.max(1, state.phaseCurrentLimit)) * 0.42 + Math.max(0, state.latestForces.watts - state.motorPower) * 0.00055;
+  const batteryHeat = Math.max(0, state.latestForces.amps / Math.max(1, state.packCurrent)) * 0.32 + Math.max(0, state.latestForces.voltageSag) * 0.018;
+  const controllerCooling = Math.max(0, state.controllerTemp - 30) * (0.018 + Math.min(0.09, Math.abs(state.velocity) * 0.004));
+  const batteryCooling = Math.max(0, state.batteryTemp - 28) * 0.012;
+  state.controllerTemp = clamp(state.controllerTemp + (controllerHeat - controllerCooling) * dt, 25, 115);
+  state.batteryTemp = clamp(state.batteryTemp + (batteryHeat - batteryCooling) * dt, 20, 90);
   state.fallLimits.temp = calculateThermalRatio();
 }
 
@@ -1264,12 +1641,20 @@ function calculateThermalRatio() {
   return clamp((state.motorTemp - state.motorStartTemp) / range, 0, 1.4);
 }
 
+function calculateControllerThermalRatio() {
+  return clamp((state.controllerTemp - 30) / 60, 0, 1.4);
+}
+
+function calculateBatteryThermalRatio() {
+  return clamp((state.batteryTemp - 28) / 42, 0, 1.4);
+}
+
 function drainBattery(dt) {
   if (!state.batteryDrainEnabled) return;
   if (state.batteryPercent <= Number(batteryPercentSlider.min)) return;
 
   const battery = getBatterySpec();
-  const capacityWh = battery.cells * battery.parallel * 3.6 * 5;
+  const capacityWh = battery.capacityWh;
   const activeWatts = Math.max(0, state.latestForces.watts);
   const idleWatts = Math.abs(state.velocity) > 0.05 ? 18 : 5;
   const consumedWh = (activeWatts + idleWatts) * dt / 3600 * state.drainRate;
@@ -1324,6 +1709,14 @@ tireSelect.addEventListener("change", () => {
   tireDiameterSlider.value = String(state.tireDiameter);
 });
 
+tirePsiSlider.addEventListener("input", () => {
+  state.tirePsi = Number(tirePsiSlider.value);
+});
+
+tireCompoundSelect.addEventListener("change", () => {
+  state.tireCompound = tireCompoundSelect.value;
+});
+
 motorSelect.addEventListener("change", () => {
   state.motorKey = motorSelect.value;
   state.motorKv = motors[state.motorKey].kv;
@@ -1335,9 +1728,13 @@ motorSelect.addEventListener("change", () => {
 batterySelect.addEventListener("change", () => {
   state.batteryKey = batterySelect.value;
   state.batterySeries = batteries[state.batteryKey].cells;
+  state.batteryParallel = batteries[state.batteryKey].parallel;
   state.packCurrent = batteries[state.batteryKey].current;
+  state.phaseCurrentLimit = Math.round(state.packCurrent * 2.6);
   batterySeriesSlider.value = String(state.batterySeries);
+  batteryParallelSlider.value = String(state.batteryParallel);
   packCurrentSlider.value = String(state.packCurrent);
+  phaseCurrentSlider.value = String(state.phaseCurrentLimit);
 });
 
 tireDiameterSlider.addEventListener("input", () => {
@@ -1346,6 +1743,10 @@ tireDiameterSlider.addEventListener("input", () => {
 
 footpadLengthSlider.addEventListener("input", () => {
   state.footpadLength = Number(footpadLengthSlider.value);
+});
+
+boardHeightSlider.addEventListener("input", () => {
+  state.boardHeight = Number(boardHeightSlider.value);
 });
 
 motorKvSlider.addEventListener("input", () => {
@@ -1375,8 +1776,28 @@ batterySeriesSlider.addEventListener("input", () => {
   state.batterySeries = Number(batterySeriesSlider.value);
 });
 
+batteryParallelSlider.addEventListener("input", () => {
+  state.batteryParallel = Number(batteryParallelSlider.value);
+});
+
 packCurrentSlider.addEventListener("input", () => {
   state.packCurrent = Number(packCurrentSlider.value);
+});
+
+phaseCurrentSlider.addEventListener("input", () => {
+  state.phaseCurrentLimit = Number(phaseCurrentSlider.value);
+});
+
+controllerDutySlider.addEventListener("input", () => {
+  state.controllerDutyLimit = Number(controllerDutySlider.value);
+});
+
+fieldWeakeningSlider.addEventListener("input", () => {
+  state.fieldWeakening = Number(fieldWeakeningSlider.value);
+});
+
+cutoffVoltageSlider.addEventListener("input", () => {
+  state.cutoffVoltage = Number(cutoffVoltageSlider.value);
 });
 
 batteryPercentSlider.addEventListener("input", () => {
@@ -1399,8 +1820,20 @@ riderHeightSlider.addEventListener("input", () => {
   state.riderHeight = Number(riderHeightSlider.value);
 });
 
+kneeBendSlider.addEventListener("input", () => {
+  state.kneeBend = Number(kneeBendSlider.value);
+});
+
+stanceWidthSlider.addEventListener("input", () => {
+  state.stanceWidth = Number(stanceWidthSlider.value);
+});
+
 inclineAngleSlider.addEventListener("input", () => {
   state.inclineAngle = Number(inclineAngleSlider.value);
+});
+
+surfaceSelect.addEventListener("change", () => {
+  state.surfaceKey = surfaceSelect.value;
 });
 
 modeInputs.forEach((input) => {

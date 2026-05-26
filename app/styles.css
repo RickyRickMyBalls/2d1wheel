@@ -106,6 +106,25 @@ canvas {
   font-size: 1.05rem;
 }
 
+.viewport-lean-control {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 3;
+  width: min(360px, calc(100% - 420px));
+  min-width: 260px;
+  padding: 10px 14px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(25, 29, 31, 0.82);
+  backdrop-filter: blur(12px);
+  transform: translateX(-50%);
+}
+
+.viewport-lean-control .control {
+  gap: 8px;
+}
+
 .control-panel {
   display: flex;
   flex-direction: column;
@@ -375,6 +394,11 @@ kbd {
     left: 12px;
     grid-template-columns: repeat(5, 1fr);
   }
+
+  .viewport-lean-control {
+    top: 104px;
+    width: min(360px, calc(100% - 24px));
+  }
 }
 
 @media (max-width: 520px) {
@@ -400,5 +424,10 @@ kbd {
     bottom: 8px;
     max-width: 220px;
     text-align: right;
+  }
+
+  .viewport-lean-control {
+    top: 142px;
+    min-width: 0;
   }
 }
