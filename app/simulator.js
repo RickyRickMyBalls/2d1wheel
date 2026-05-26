@@ -56,6 +56,7 @@ const drainRateSlider = document.querySelector("#drainRateSlider");
 const riderWeightSlider = document.querySelector("#riderWeightSlider");
 const riderHeightSlider = document.querySelector("#riderHeightSlider");
 const kneeBendSlider = document.querySelector("#kneeBendSlider");
+const viewportKneeBendSlider = document.querySelector("#viewportKneeBendSlider");
 const stanceWidthSlider = document.querySelector("#stanceWidthSlider");
 const inclineAngleSlider = document.querySelector("#inclineAngleSlider");
 const surfaceSelect = document.querySelector("#surfaceSelect");
@@ -80,6 +81,7 @@ const drainRateValue = document.querySelector("#drainRateValue");
 const riderWeightValue = document.querySelector("#riderWeightValue");
 const riderHeightValue = document.querySelector("#riderHeightValue");
 const kneeBendValue = document.querySelector("#kneeBendValue");
+const viewportKneeBendValue = document.querySelector("#viewportKneeBendValue");
 const stanceWidthValue = document.querySelector("#stanceWidthValue");
 const inclineAngleValue = document.querySelector("#inclineAngleValue");
 const restartButton = document.querySelector("#restartButton");
@@ -189,6 +191,11 @@ const state = {
     startWidth: 420,
     startHeight: 124
   },
+  leanTap: {
+    key: "",
+    time: 0,
+    count: 0
+  },
   keys: new Set()
 };
 
@@ -199,6 +206,9 @@ const modes = {
 };
 
 const maxLeanDegrees = 45;
+const riderControlRate = 86;
+const kneeBendControlRate = riderControlRate * 10;
+const leanTapWindow = 340;
 
 const tires = {
   "pint-slick": { name: "10.5 in slick", diameter: 10.5, width: 6, grip: 0.95, rolling: 0.98, tread: "slick" },
@@ -306,10 +316,17 @@ function update(dt) {
   const rawDt = dt;
   dt = getSimulationDt(dt);
 
-  if (state.keys.has("KeyA")) state.targetLean -= 86 * dt;
-  if (state.keys.has("KeyD")) state.targetLean += 86 * dt;
+  if (state.keys.has("KeyA")) state.targetLean -= riderControlRate * dt;
+  if (state.keys.has("KeyD")) state.targetLean += riderControlRate * dt;
   state.targetLean = clamp(state.targetLean, -maxLeanDegrees, maxLeanDegrees);
   leanSlider.value = String(Math.round(state.targetLean));
+
+  if (state.keys.has("KeyW")) state.kneeBend -= kneeBendControlRate * dt;
+  if (state.keys.has("KeyS")) state.kneeBend += kneeBendControlRate * dt;
+  state.kneeBend = clamp(state.kneeBend, Number(kneeBendSlider.min), Number(kneeBendSlider.max));
+  kneeBendSlider.value = String(Math.round(state.kneeBend));
+  viewportKneeBendSlider.value = String(Math.round(state.kneeBend));
+
   updateScrapeRecovery(rawDt);
 
   const mode = modes[state.mode];
@@ -625,6 +642,7 @@ function wheelBendX() {
 function drawRider(railHalf, padLength, padY, lean) {
   const scale = getRiderScale();
   const crouch = state.kneeBend / 100;
+  const visualCrouch = crouch * 1.2 - 0.1;
   const stance = state.stanceWidth * scale;
   const leanAmount = clamp(lean / degreesToRadians(maxLeanDegrees), -1.15, 1.15);
   const leftFoot = {
@@ -637,23 +655,23 @@ function drawRider(railHalf, padLength, padY, lean) {
   };
   const hip = {
     x: leanAmount * 34 * scale,
-    y: padY - (72 - crouch * 22) * scale
+    y: padY - (72 - visualCrouch * 22) * scale
   };
   const leftKnee = {
-    x: lerp(leftFoot.x, hip.x - stance * 0.16, 0.56) - 7 * scale - crouch * 10,
-    y: lerp(leftFoot.y, hip.y, 0.52) - (18 - crouch * 8) * scale
+    x: lerp(leftFoot.x, hip.x - stance * 0.16, 0.56) - 7 * scale - visualCrouch * 10,
+    y: lerp(leftFoot.y, hip.y, 0.52) - (18 - visualCrouch * 8) * scale
   };
   const rightKnee = {
-    x: lerp(rightFoot.x, hip.x + stance * 0.16, 0.56) + 7 * scale + crouch * 10,
-    y: lerp(rightFoot.y, hip.y, 0.52) - (18 - crouch * 8) * scale
+    x: lerp(rightFoot.x, hip.x + stance * 0.16, 0.56) + 7 * scale + visualCrouch * 10,
+    y: lerp(rightFoot.y, hip.y, 0.52) - (18 - visualCrouch * 8) * scale
   };
   const shoulder = {
     x: hip.x + leanAmount * 48 * scale,
-    y: hip.y - (66 - crouch * 14) * scale
+    y: hip.y - (66 - visualCrouch * 14) * scale
   };
   const head = {
     x: shoulder.x + leanAmount * 18 * scale,
-    y: shoulder.y - (40 - crouch * 5) * scale
+    y: shoulder.y - (40 - visualCrouch * 5) * scale
   };
   const headRadius = 18 * scale;
   const shoulderSpan = 44 * scale;
@@ -1178,7 +1196,8 @@ function updateHud() {
   drainRateValue.textContent = `${state.drainRate}x`;
   riderWeightValue.textContent = `${state.riderWeight} lb`;
   riderHeightValue.textContent = `${state.riderHeight} in`;
-  kneeBendValue.textContent = `${state.kneeBend}%`;
+  kneeBendValue.textContent = `${Math.round(state.kneeBend)}%`;
+  viewportKneeBendValue.textContent = `${Math.round(state.kneeBend)}%`;
   stanceWidthValue.textContent = `${state.stanceWidth} px`;
   inclineAngleValue.textContent = `${state.inclineAngle.toFixed(1)} deg`;
 }
@@ -1822,6 +1841,12 @@ riderHeightSlider.addEventListener("input", () => {
 
 kneeBendSlider.addEventListener("input", () => {
   state.kneeBend = Number(kneeBendSlider.value);
+  viewportKneeBendSlider.value = kneeBendSlider.value;
+});
+
+viewportKneeBendSlider.addEventListener("input", () => {
+  state.kneeBend = Number(viewportKneeBendSlider.value);
+  kneeBendSlider.value = viewportKneeBendSlider.value;
 });
 
 stanceWidthSlider.addEventListener("input", () => {
@@ -1865,8 +1890,27 @@ pauseButton.addEventListener("click", () => {
   pauseButton.textContent = state.paused ? "Resume" : "Pause";
 });
 
+function applyLeanTapBoost(code) {
+  if (!["KeyA", "KeyD"].includes(code)) return;
+
+  const now = performance.now();
+  const sameTapCombo = state.leanTap.key === code && now - state.leanTap.time <= leanTapWindow;
+  state.leanTap = {
+    key: code,
+    time: now,
+    count: sameTapCombo ? state.leanTap.count + 1 : 1
+  };
+
+  if (state.leanTap.count < 2) return;
+
+  const direction = code === "KeyA" ? -1 : 1;
+  const impulse = clamp(6 + state.leanTap.count * 4, 0, 26);
+  state.targetLean = clamp(state.targetLean + direction * impulse, -maxLeanDegrees, maxLeanDegrees);
+  leanSlider.value = String(Math.round(state.targetLean));
+}
+
 window.addEventListener("keydown", (event) => {
-  if (["KeyA", "KeyD", "Space"].includes(event.code)) event.preventDefault();
+  if (["KeyA", "KeyD", "KeyW", "KeyS", "Space"].includes(event.code)) event.preventDefault();
   if (event.code === "Space") {
     state.paused = !state.paused;
     pauseButton.textContent = state.paused ? "Resume" : "Pause";
@@ -1875,6 +1919,7 @@ window.addEventListener("keydown", (event) => {
   } else if (event.code === "Digit0") {
     state.cameraZoom = 1;
   } else {
+    if (!event.repeat) applyLeanTapBoost(event.code);
     state.keys.add(event.code);
   }
 });

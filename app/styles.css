@@ -108,17 +108,19 @@ canvas {
 
 .viewport-lean-control {
   position: absolute;
-  top: 18px;
-  left: 50%;
+  top: 96px;
+  left: 18px;
   z-index: 3;
-  width: min(360px, calc(100% - 420px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(360px, calc(100% - 36px));
   min-width: 260px;
   padding: 10px 14px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(25, 29, 31, 0.82);
   backdrop-filter: blur(12px);
-  transform: translateX(-50%);
 }
 
 .viewport-lean-control .control {
@@ -396,6 +398,7 @@ kbd {
   }
 
   .viewport-lean-control {
+    left: 12px;
     top: 104px;
     width: min(360px, calc(100% - 24px));
   }
@@ -427,7 +430,9 @@ kbd {
   }
 
   .viewport-lean-control {
+    left: 10px;
     top: 142px;
     min-width: 0;
+    width: calc(100% - 20px);
   }
 }

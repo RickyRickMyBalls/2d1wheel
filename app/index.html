@@ -32,10 +32,14 @@
             <strong id="freespinReadout">0.0 mph</strong>
           </div>
         </div>
-        <div class="viewport-lean-control" aria-label="Rider lean control">
+        <div class="viewport-lean-control" aria-label="Rider controls">
           <label class="control">
             <span>Rider lean</span>
             <input id="leanSlider" type="range" min="-45" max="45" step="1" value="0">
+          </label>
+          <label class="control">
+            <span>Knee bend <b id="viewportKneeBendValue">15%</b></span>
+            <input id="viewportKneeBendSlider" type="range" min="0" max="100" step="1" value="15">
           </label>
         </div>
       </section>
@@ -344,6 +348,7 @@
 
         <div class="keys" aria-label="Keyboard controls">
           <span><kbd>A</kbd>/<kbd>D</kbd> lean</span>
+          <span><kbd>W</kbd>/<kbd>S</kbd> knee bend</span>
           <span><kbd>Space</kbd> pause</span>
           <span><kbd>R</kbd> restart</span>
         </div>
